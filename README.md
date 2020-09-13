@@ -1,2 +1,2 @@
 # dbt-dremio
-[Dremio](https://www.dremio.com/)'s adapter for [dbt, the data build tool](https://www.getdbt.com/)
+[dbt](https://www.getdbt.com/)'s adapter for [dremio](https://www.dremio.com/)

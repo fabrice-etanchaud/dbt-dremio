@@ -1,0 +1,11 @@
+
+name: dbt_dremio
+version: 1.0
+config-version: 2
+
+quoting:
+  database: true
+  schema: true
+  identifier: true
+
+macro-paths: ["macros"]

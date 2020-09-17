@@ -1,7 +1,7 @@
 {% materialization incremental, adapter='dremio' %}
 {%- set full_refresh_mode = (flags.FULL_REFRESH == True) -%}
 {% set unique_key = config.get('unique_key') %}
-{%- set materialization_database = config.rquire('materialization_database') %}
+{%- set materialization_database = config.require('materialization_database') %}
 {%- set materialization_schema = config.require('materialization_schema') %}
 {%- set identifier = model['alias'] -%}
 {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}

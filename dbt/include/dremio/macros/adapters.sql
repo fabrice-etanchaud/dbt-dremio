@@ -1,6 +1,6 @@
 {% macro dremio__create_schema(relation) -%}
   {{ exceptions.raise_not_implemented(
-    'create_schema macro not implemented for adapter '+adapter.type()) }}
+    'create_schema macro (' + relation.render() + ') not implemented yet for adapter ' + adapter.type()) }}
 {% endmacro %}
 
 {% macro dremio__drop_schema(relation) -%}

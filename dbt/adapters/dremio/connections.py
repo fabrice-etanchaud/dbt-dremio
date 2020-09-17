@@ -19,8 +19,9 @@ class DremioCredentials(Credentials):
     host: str
     UID: str
     PWD: str
-    schema: Optional[str]
+    environment: Optional[str]
     database: Optional[str]
+    schema: Optional[str]
     port: Optional[int] = 31010
     additional_parameters: Optional[str] = None
 
@@ -30,8 +31,7 @@ class DremioCredentials(Credentials):
         , 'pass': 'PWD'
         , 'password': 'PWD'
         , 'server': 'host'
-        , 'environment': 'database'
-        , 'track' : 'database'
+        , 'track' : 'environment'
     }
 
     @property
@@ -41,13 +41,13 @@ class DremioCredentials(Credentials):
     def _connection_keys(self):
         # return an iterator of keys to pretty-print in 'dbt debug'
         # raise NotImplementedError
-        return 'driver', 'host', 'port', 'UID', 'schema', 'database', 'additional_parameters'
+        return 'driver', 'host', 'port', 'UID', 'environment', 'database', 'schema', 'additional_parameters'
 
-    def __post_init__(self):
-        if self.database is None:
-            self.database = '@' + self.UID
-        if self.schema is None:
-            self.schema = DremioRelation.no_schema
+#    def __post_init__(self):
+#        if self.database is None:
+#            self.database = '@' + self.UID
+#        if self.schema is None:
+#            self.schema = DremioRelation.no_schema
 
 class DremioConnectionManager(SQLConnectionManager):
     TYPE = 'dremio'

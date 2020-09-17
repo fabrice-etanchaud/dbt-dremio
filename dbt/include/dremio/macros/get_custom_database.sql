@@ -1,0 +1,18 @@
+{% macro generate_database_name(custom_database_name=none, node=none) -%}
+    {%- set default_database = target.database -%}
+    {%- if target.name == 'managed' %}
+      {%- if custom_database_name is not none -%}
+        {{ custom_database_name }}
+      {%- elif default_database is not none -%}
+        {{ default_database }}
+      {%- else -%}
+        {{ target.environment }}
+      {%- endif -%}
+    {%- else -%}
+      {%- if default_database is not none %}
+        {{ default_database }}
+      {% else %}
+        {{ get_user_database() }}
+      {%- endif -%}
+    {%- endif -%}
+{%- endmacro %}

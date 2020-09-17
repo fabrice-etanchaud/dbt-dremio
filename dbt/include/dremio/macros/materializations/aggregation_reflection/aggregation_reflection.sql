@@ -1,7 +1,8 @@
-{% macro create_raw_reflection(view, reflection, display, sort=None, partition=None, distribute=None) %}
+{% macro create_aggregation_reflection(view, reflection, dimensions, measures, sort=None, partition=None, distribute=None) %}
   alter dataset {{ view }}
-    create raw reflection {{ reflection.include(database=False, schema=False) }}
-      using display( {{ display | map('tojson') | join(', ') }} )
+    create aggregate reflection {{ reflection.include(database=False, schema=False) }}
+      using dimensions( {{ dimensions | map('tojson') | join(', ') }} )
+      measures( {{ measures | map('tojson') | join(', ') }} )
       {% if partition is not none %}
         partition by ( {{ partition | map('tojson') | join(', ') }} )
       {% endif %}
@@ -13,9 +14,10 @@
       {% endif %}
 {% endmacro %}
 
-{% materialization raw_reflection, adapter='dremio' %}
+{% materialization aggregation_reflection, adapter='dremio' %}
   {% set view = config.require('view') %}
-  {% set display = config.get('display') %}
+  {% set dimensions = config.get('dimensions') %}
+  {% set measures = config.get('measures') %}
   {% set partition = config.get('partition') %}
   {% set sort = config.get('sort') %}
   {% set distribute = config.get('distribute') %}
@@ -23,8 +25,12 @@
   {% set identifier = model['alias'] %}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
   {%- set target_relation = this.incorporate(type='materializedview') %}
-  {% if display is none %}
-    {% set display = adapter.get_columns_in_relation(dataset) | map(attribute='name') | list %}
+  {% set columns = adapter.get_columns_in_relation(dataset) %}
+  {% if dimensions is none %}
+    {% set dimensions = columns | rejectattr('dtype', 'in', ['decimal', 'float', 'double']) | map(attribute='name') | list %}
+  {% endif %}
+  {% if measures is none %}
+    {% set measures = columns | selectattr('dtype', 'in', ['decimal', 'float', 'double']) | map(attribute='name') | list %}
   {% endif %}
   {{ run_hooks(pre_hooks, inside_transaction=False) }}
   -- `BEGIN` happens here:
@@ -33,7 +39,7 @@
   {{ drop_reflection_if_exists(dataset, old_relation) }}
   -- build model
   {% call statement('main') -%}
-    {{ create_raw_reflection(dataset, target_relation, display, sort, partition, distribute) }}
+    {{ create_aggregation_reflection(dataset, target_relation, dimensions, measures, sort, partition, distribute) }}
   {%- endcall %}
   {{ run_hooks(post_hooks, inside_transaction=True) }}
   -- `COMMIT` happens here

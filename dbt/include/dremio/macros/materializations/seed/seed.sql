@@ -41,24 +41,24 @@
 {% endmacro %}
 
 {% materialization seed, adapter='dremio' %}
-  {%- set materialization_database = config.get('materialization_database', default='$scratch') %}
+  {%- set materialization_database = config.require('materialization_database') %}
+  {%- set materialization_schema = config.require('materialization_schema') %}
   {%- set identifier = model['alias'] -%}
   {%- set full_refresh_mode = True -%}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
   {% set target_relation = this.incorporate(type='view') %}
   {%- set exists_as_table = (old_relation is not none and old_relation.is_table) -%}
-  {%- set exists_as_view = (old_relation is not none and old_relation.is_view) -%}
-  {%- set agate_table = load_agate_table() -%}
+    {%- set agate_table = load_agate_table() -%}
   {%- do store_result('agate_table', status='OK', agate_table=agate_table) -%}
   {{ run_hooks(pre_hooks, inside_transaction=False) }}
   -- `BEGIN` happens here:
   {{ run_hooks(pre_hooks, inside_transaction=True) }}
   {% if exists_as_table %}
-    {{ exceptions.raise_compiler_error("Cannot seed to '{}', it is a table".format(old_relation)) }}
+    {{ exceptions.raise_compiler_error("Cannot create virtual dataset '{}', there is already a physical dataset named the same".format(old_relation)) }}
   {% endif %}
   {% set num_rows = (agate_table.rows | length) %}
   {% set sql = dremio_select_csv_rows(model, agate_table) %}
-  {% set old_table, target_table = dremio_get_old_and_target_tables(target_relation, materialization_database) %}
+  {% set old_table, target_table = dremio_get_old_and_target_tables(target_relation, materialization_database, materialization_schema) %}
   {{ drop_relation_if_exists(target_table) }}
   {% call statement('main') %}
     {{ create_table_as(False, target_table, sql) }}

@@ -63,7 +63,12 @@ I tried to keep things secure setting up a kind of logical interface between the
 
 > This could change in near future, as Dremio's CEO Tomer Shiran posted in discourse that [Apache Iceberg](https://iceberg.apache.org/) could be included by the end of the year, bringing INSERT [OVERWRITE] to dremio, challenging a well known cloud datawarehouse in the same temperatures...
 
-## Seeds
+**Seed, table and incremental materializations have two required configuration parameters : materialization_database and materialization_schema, the location where green/blue tables will be created**
+
+    +materialization_database: '$scratch'
+    +materialization_schema: 'dbt.internal'
+
+## Seed
 
     CREATE TABLE AS 
     SELECT * 

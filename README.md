@@ -29,7 +29,7 @@ In dremio, schemas are recursive, like filesystem folders : `dbt.internal."my ve
     +database: track17
     +schema: no_schema
 
-**Please not that because dremio has no CREATE SCHEMA command, all schemas must be created before in the UI or via the API**
+**Please note that because dremio has no CREATE SCHEMA command yet, all schemas must be created before in the UI or via the API**
 
 # Rendering of a relation
 

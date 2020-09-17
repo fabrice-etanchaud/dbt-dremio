@@ -96,4 +96,4 @@ As we still have the old data when new data is created, the new table is filled 
 
 ## File
 
-This materialization create a table without a view interface. It's an easy way to automated the export of a dataset (in parquet format).
+This materialization creates a table without a view interface. It's an easy way to automated the export of a dataset (in parquet format).

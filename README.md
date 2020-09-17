@@ -4,7 +4,13 @@
 If you are reading this documentation, I assume you already know well both dbt and dremio. Please refer to the respective documentation. 
 
 # Installation
-There is no package yet, you can clone the repository, cd in it, and then type pip3 install -e .
+dbt dependencies : 
+ - dbt-core>=0.18.0,
+ - pyodbc>=4.0.27
+dremio dependency : 
+ - latest dremio's odbc driver
+
+There is no package yet, you can clone the repository, cd in it, and then type `pip3 install -e .`
 
 # Relation types
 A dremio's relation can be a view or a table. A reflection is a special kind of table : a view's materialization with a refresh policy.
@@ -29,7 +35,7 @@ In dremio, schemas are recursive, like filesystem folders : `dbt.internal."my ve
     +database: track17
     +schema: no_schema
 
-**Please note that because dremio has no CREATE SCHEMA command yet, all schemas must be created before in the UI or via the API**
+**Please note that because dremio has no `CREATE SCHEMA` command yet, all schemas must be created before in the UI or via the API**
 
 # Rendering of a relation
 
@@ -101,3 +107,48 @@ As we still have the old data when new data is created, the new table is filled 
 ## File
 
 This materialization creates a table without a view interface. It's an easy way to automated the export of a dataset (in parquet format).
+# Connection
+Be careful to provide the right odbc driver's name in the `driver` parameter, the one you gave to your dremio's odbc driver installation.
+
+## Environments
+Please note the specific parameter `environment`, it is a way to map sources' environments between dremio and dbt :
+
+ - dremio's side: prefix all the source's names of a specific environment `prd` with its name, for example : `prd_crm, prd_hr, prd_accounting`
+ - dbt's side: prefix all source's database configs with `{{target.environment}}_`
+That way you can configure both sources' `environment` and target `database`
+
+## Managed or unmanaged target
+Thanks to [Ronald Damhof's article](https://prudenza.typepad.com/files/english---the-data-quadrant-model-interview-ronald-damhof.pdf), I wanted to have a clear separation between managed environments (prod, preprod...) and unmanaged ones (developers' environments). So there are two distinct targets : managed and unmanaged.
+
+In an unmanaged environment, if no target database is provided, all models are materialized in the user's home space, under the target schema.
+
+In a managed environment, target and custom databases and schemas are used as usual. If no target database is provided,  `environment`will be used as the default value.
+
+You will find in [the macros' directory](https://github.com/fabrice-etanchaud/dbt-dremio/tree/master/dbt/include/dremio/macros) an environment aware implementation for custom database and schema names.
+
+
+    track17:
+      outputs:
+        unmanaged:
+          type: dremio
+          threads: 2
+          driver: Dremio ODBC Driver 64-bit
+          host: veniseverte.fr
+          port: 31010
+          environment: track17
+          schema: dbt
+          user: fabrice_etanchaud
+          password: fabricesecretpassword
+        managed:
+          type: dremio
+          threads: 2
+          driver: Dremio ODBC Driver 64-bit
+          host: veniseprovencale.fr
+          port: 31010
+          environment: track17
+          database: '@dremio'
+          schema: no_schema
+          user: dremio
+          password: dremiosecretpassword
+      target: unmanaged
+

@@ -7,6 +7,7 @@ If you are reading this documentation, I assume you already know well both dbt a
 dbt dependencies : 
  - dbt-core>=0.18.0,
  - pyodbc>=4.0.27
+ 
 dremio dependency : 
  - latest dremio's odbc driver
 

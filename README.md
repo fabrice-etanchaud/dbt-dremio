@@ -109,6 +109,31 @@ As we still have the old data when new data is created, the new table is filled 
 		{% endset %}
     {% endif %}
 
+## Raw Reflection
+A raw reflection is a view's materialization, with a refresh policy, handled internally by dremio.
+
+configuration|type|required|default
+-|-|-|-
+view|the related model's name|yes|
+display| the list of columns|no|all columns
+partition| the list of partitioning columns|no[
+sort| the list of sorting columns|no|
+distribute| the list of distributing columns|no|
+
+## Aggregate Reflection
+
+An aggregate reflection is a view's materialization, containing pre aggregated measures on dimensions, with a refresh policy, handled internally by dremio.
+
+configuration|type|required|default
+-|-|-|-
+view|the related model's name|yes|
+dimensions| the list of dimension columns|no|all columns whom type is not in 'float', 'double' and 'decimal'
+measures| the list of measurement columns|no|all columns whom type is in 'float', 'double' and 'decimal'
+partition| the list of partitioning columns|no|
+sort| the list of sorting columns|no|
+distribute| the list of distributing columns|no|
+
+
 ## File
 
 This materialization creates a table without a view interface. It's an easy way to automated the export of a dataset (in parquet format).

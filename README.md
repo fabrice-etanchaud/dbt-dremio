@@ -3,6 +3,9 @@
 
 If you are reading this documentation, I assume you already know well both dbt and dremio. Please refer to the respective documentation. 
 
+# Installation
+There is no package yet, you can clone the repository, cd in it, and then type pip3 install -e .
+
 # Relation types
 A dremio's relation can be a view or a table. A reflection is a special kind of table : a view's materialization with a refresh policy.
 

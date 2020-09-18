@@ -147,9 +147,9 @@ Be careful to provide the right odbc driver's name in the `driver` parameter, th
 ## Environments
 Please note the specific parameter `environment`, it is a way to map sources' environments between dremio and dbt :
 
- - dremio's side: prefix all the source's names of a specific environment `prd` with its name, for example : `prd_crm, prd_hr, prd_accounting`
+ - dremio's side: prefix all the sources' names of a specific environment `prd` with the environment's name, for example : `prd_crm, prd_hr, prd_accounting`
  - dbt's side: prefix all source's database configs with `{{target.environment}}_`
-That way you can configure both sources' `environment` and target `database`
+That way you can configure seperately input sources' `environment` and output target `database`
 
 ## Managed or unmanaged target
 Thanks to [Ronald Damhof's article](https://prudenza.typepad.com/files/english---the-data-quadrant-model-interview-ronald-damhof.pdf), I wanted to have a clear separation between managed environments (prod, preprod...) and unmanaged ones (developers' environments). So there are two distinct targets : managed and unmanaged.

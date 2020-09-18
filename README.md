@@ -3,7 +3,7 @@
 # dbt-dremio
 [dbt](https://www.getdbt.com/)'s adapter for [dremio](https://www.dremio.com/)
 
-If you are reading this documentation, I assume you already know well both dbt and dremio. Please refer to the respective documentation. 
+If you are reading this documentation, I assume you already know well both dbt and dremio. Please refer to their respective documentation. 
 
 # Installation
 dbt dependencies : 

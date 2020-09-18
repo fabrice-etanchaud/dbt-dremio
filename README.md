@@ -140,7 +140,7 @@ distribute| the list of distributing columns|no|
 
 ## File
 
-This materialization creates a table without a view interface. It's an easy way to automated the export of a dataset (in parquet format).
+This materialization creates a table without a view interface. It's an easy way to automate the export of a dataset (in parquet format).
 # Connection
 Be careful to provide the right odbc driver's name in the `driver` parameter, the one you gave to your dremio's odbc driver installation.
 

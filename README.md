@@ -55,6 +55,7 @@ Given that :
 
 - tables and views cannot coexist in the same schema
 - there are no transactions (at DDL level),
+- there is no `ALTER TABLE|VIEW RENAME TO`command
 - you can `CREATE OR REPLACE` a view, but only `CREATE` a table,
 - data can only be added in tables with a CTAS,
 

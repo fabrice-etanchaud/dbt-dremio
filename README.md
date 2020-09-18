@@ -61,7 +61,7 @@ Given that :
 
 I tried to keep things secure setting up a kind of logical interface between the dbt model and its implementation in dremio. So :
 
- - every materialization (except `file`)  has a view as interface, so all kind of materializations could coexist in a same schema,
+ - every materialization (except `file` and reflections)  has a view as interface, so all kind of materializations could coexist in a same schema,
  - each new version of the model's data is first stored in a new `$scratch` table, and then referenced atomically (via `CREATE OR REPLACE VIEW`) by the interface view. The table containing the old version of the data can then be dropped : a kind of pedantic blue/green deployement at model's level.
  - the coexistence of old and new data versions help overcoming the lack of SQL-DML commands, see for example the `incremental` implementation.
 

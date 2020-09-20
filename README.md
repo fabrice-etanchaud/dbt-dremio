@@ -63,7 +63,7 @@ I tried to keep things secure setting up a kind of logical interface between the
 
  - every materialization (except `file` and reflections)  has a view as interface, so all kind of materializations could coexist in a same space,
  - each new version of the model's data is first stored in a new `$scratch` table, and then referenced atomically (via `CREATE OR REPLACE VIEW`) by the interface view. The table containing the old version of the data can then be dropped : a kind of pedantic blue/green deployement at model's level.
- - the coexistence of old and new data versions help overcoming the lack of SQL-DML commands, see for example the `incremental` implementation.
+ - the coexistence of old and new data versions helps overcoming the lack of SQL-DML commands, see for example the `incremental` implementation.
 
 > This could change in near future, as Dremio's CEO Tomer Shiran posted in discourse that [Apache Iceberg](https://iceberg.apache.org/) could be included by the end of the year, bringing INSERT [OVERWRITE] to dremio, challenging a well known cloud datawarehouse in the same temperatures...
 

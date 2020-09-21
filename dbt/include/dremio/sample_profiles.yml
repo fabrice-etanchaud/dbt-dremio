@@ -1,0 +1,25 @@
+default:
+  outputs:
+    unmanaged:
+      type: dremio
+      threads: 2
+      driver: [driver]
+      host: [host]
+      port: 31010
+      environment: [environment]
+      database: [database]
+      schema: [schema]
+      user: [user]
+      password: [password]
+    managed:
+      type: dremio
+      threads: 2
+      driver: [driver]
+      host: [host]
+      port: 31010
+      environment: [environment]
+      database: [database]
+      schema: [schema]
+      user: [user]
+      password: [password]
+  target: unmanaged

@@ -12,6 +12,9 @@ dbt dependencies :
  
 dremio dependency : 
  - latest dremio's odbc driver
+ 
+os dependency :
+- odbc (unixodbc-dev on linux)
 
 There is no package yet, you can clone the repository, cd in it, and then type `pip3 install -e .`
 

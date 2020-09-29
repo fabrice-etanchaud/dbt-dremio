@@ -16,7 +16,7 @@ dremio dependency :
 os dependency :
 - odbc (unixodbc-dev on linux)
 
-There is no package yet, you can clone the repository, cd in it, and then type `pip3 install -e .`
+`pip install dbt-dremio`
 
 # Relation types
 A dremio's relation can be a view or a table. A reflection is a special kind of table : a view's materialization with a refresh policy.

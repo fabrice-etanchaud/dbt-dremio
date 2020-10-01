@@ -9,7 +9,3 @@ quoting:
   identifier: true
 
 macro-paths: ["macros"]
-
-vars:
-  default_materialization_database: '$scratch'
-  default_materialization_schema: 'dbt.internal'

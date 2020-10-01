@@ -1,6 +1,6 @@
 {% materialization table, adapter='dremio' %}
-  {%- set materialization_database = config.require('materialization_database') %}
-  {%- set materialization_schema = config.require('materialization_schema') %}
+  {%- set materialization_database = config.get('materialization_database', '$scratch') %}
+  {%- set materialization_schema = config.get('materialization_schema', 'no_schema') %}
   {% set partition = config.get('partition') %}
   {% set sort = config.get('sort') %}
   {%- set identifier = model['alias'] -%}

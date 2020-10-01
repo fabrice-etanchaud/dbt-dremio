@@ -28,7 +28,7 @@ There are two kinds of dataset's locations : sources and spaces. Sources are mos
 location|can create table| can drop table |can create/drop view
 -|-|-|-
 source|if CTAS (`CREATE TABLE AS`) is allowed on this source|if `DROP TABLE` is allowed on this source|no
-space|only in the user's home space, by uploading files in the UI|only in the UI|yes
+space|only in the user's home space, and by manually uploading files in the UI|only in the UI|yes
 distributed shared storage (`$scratch` source)|yes|yes|no
 
 As you can see, using the SQL-DDL interface, the location's type implies the relation's type, so materialization's implementations do not have to take care of possible relation type mutations.
@@ -64,18 +64,18 @@ Given that :
 
 I tried to keep things secure setting up a kind of logical interface between the dbt model and its implementation in dremio. So :
 
- - every materialization (except `file` and reflections)  has a view as interface, so all kind of materializations could coexist in a same space,
- - each new version of the model's data is first stored in a new `$scratch` table, and then referenced atomically (via `CREATE OR REPLACE VIEW`) by the interface view. The table containing the old version of the data can then be dropped : a kind of pedantic blue/green deployement at model's level.
+ - almost all materializations create a view as interface, so they could coexist in a same space,
+ - each new version of the model's underlying data is first stored in a new table, and then referenced atomically (via a `CREATE OR REPLACE VIEW`) by the interface view. The table containing the old version of the underlying data can then be dropped : a kind of pedantic blue/green deployement at model's level.
  - the coexistence of old and new data versions helps overcoming the lack of SQL-DML commands, see for example the `incremental` implementation.
 
 > This could change in near future, as Dremio's CEO Tomer Shiran posted in discourse that [Apache Iceberg](https://iceberg.apache.org/) could be included by the end of the year, bringing INSERT [OVERWRITE] to dremio, challenging a well known cloud datawarehouse in the same temperatures...
 
-**Seed, table and incremental materializations have two required configuration parameters : materialization_database and materialization_schema, the location where green/blue tables will be created**
-
-    +materialization_database: '$scratch'
-    +materialization_schema: 'dbt.internal'
-
 ## Seed
+
+configuration|type|required|default
+-|-|-|-
+materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
+materialization_schema||no|`no_schema`
 
     CREATE TABLE AS
     SELECT *
@@ -89,10 +89,25 @@ As dremio does not support query's bindings, the python value is converted as st
 
 ## Table
 
-    CREATE TABLE AS
+configuration|type|required|default
+-|-|-|-
+materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
+materialization_schema||no|`no_schema`
+partition| the list of partitioning columns|no|
+sort| the list of sorting columns|no|
+
+    CREATE TABLE [HASH PARTITION BY] [LOCALSORT BY] AS
     {{ sq }}
 
 ## Incremental
+
+configuration|type|required|default
+-|-|-|-
+materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
+materialization_schema||no|`no_schema`
+partition| the list of partitioning columns|no|
+sort| the list of sorting columns|no|
+
 As we still have the old data when new data is created, the new table is filled with :
 
     {% if full_refresh_mode or old_relation is none %}
@@ -143,22 +158,24 @@ distribute| the list of distributing columns|no|
 ## File
 
 This materialization creates a table without a view interface. It's an easy way to automate the export of a dataset (in parquet format).
+
 # Connection
-Be careful to provide the right odbc driver's name in the `driver` parameter, the one you gave to your dremio's odbc driver installation.
+Be careful to provide the right odbc driver's name in the adapter specific `driver` attribute, the one you gave to your dremio's odbc driver installation.
 
 ## Environments
-Please note the specific parameter `environment`, it is a way to map sources' environments between dremio and dbt :
+
+You can use the undocumented `target.profile_name` or the adapter specific `environment` attribute as a way to map environments between dremio and dbt :
 
  - dremio's side: prefix all the sources' names of a specific environment `prd` with the environment's name, for example : `prd_crm, prd_hr, prd_accounting`
- - dbt's side: prefix all source's database configs with `{{target.environment}}_`
-That way you can configure seperately input sources' `environment` and output target `database`
+ - dbt's side: prefix all source's database configs with `{{target.environment}}_` or `{{target.profile_name}}_`
+That way you can configure seperately input sources and output target `database`.
 
 ## Managed or unmanaged target
 Thanks to [Ronald Damhof's article](https://prudenza.typepad.com/files/english---the-data-quadrant-model-interview-ronald-damhof.pdf), I wanted to have a clear separation between managed environments (prod, preprod...) and unmanaged ones (developers' environments). So there are two distinct targets : managed and unmanaged.
 
 In an unmanaged environment, if no target database is provided, all models are materialized in the user's home space, under the target schema.
 
-In a managed environment, target and custom databases and schemas are used as usual. If no target database is provided,  `environment`will be used as the default value.
+In a managed environment, target and custom databases and schemas are used as usual. If no target database is provided,  `target.profile_name` will be used as the default value.
 
 You will find in [the macros' directory](https://github.com/fabrice-etanchaud/dbt-dremio/tree/master/dbt/include/dremio/macros) an environment aware implementation for custom database and schema names.
 

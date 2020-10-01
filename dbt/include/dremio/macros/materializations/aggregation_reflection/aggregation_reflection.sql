@@ -1,5 +1,5 @@
-{% macro create_aggregation_reflection(view, reflection, dimensions, measures, sort=None, partition=None, distribute=None) %}
-  alter dataset {{ view }}
+{% macro create_aggregation_reflection(dataset, reflection, dimensions, measures, sort=None, partition=None, distribute=None) %}
+  alter dataset {{ dataset }}
     create aggregate reflection {{ reflection.include(database=False, schema=False) }}
       using dimensions( {{ dimensions | map('tojson') | join(', ') }} )
       measures( {{ measures | map('tojson') | join(', ') }} )
@@ -15,13 +15,13 @@
 {% endmacro %}
 
 {% materialization aggregation_reflection, adapter='dremio' %}
-  {% set view = config.require('view') %}
+  {% set dataset = config.require('dataset') %}
   {% set dimensions = config.get('dimensions') %}
   {% set measures = config.get('measures') %}
   {% set partition = config.get('partition') %}
   {% set sort = config.get('sort') %}
   {% set distribute = config.get('distribute') %}
-  {% set dataset = ref(view) %}
+  {% set dataset = ref(dataset) %}
   {% set identifier = model['alias'] %}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
   {%- set target_relation = this.incorporate(type='materializedview') %}

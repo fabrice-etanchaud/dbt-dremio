@@ -1,5 +1,5 @@
-{% macro create_raw_reflection(view, reflection, display, sort=None, partition=None, distribute=None) %}
-  alter dataset {{ view }}
+{% macro create_raw_reflection(dataset, reflection, display, sort=None, partition=None, distribute=None) %}
+  alter dataset {{ dataset }}
     create raw reflection {{ reflection.include(database=False, schema=False) }}
       using display( {{ display | map('tojson') | join(', ') }} )
       {% if partition is not none %}
@@ -14,12 +14,12 @@
 {% endmacro %}
 
 {% materialization raw_reflection, adapter='dremio' %}
-  {% set view = config.require('view') %}
+  {% set dataset = config.require('dataset') %}
   {% set display = config.get('display') %}
   {% set partition = config.get('partition') %}
   {% set sort = config.get('sort') %}
   {% set distribute = config.get('distribute') %}
-  {% set dataset = ref(view) %}
+  {% set dataset = ref(dataset) %}
   {% set identifier = model['alias'] %}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
   {%- set target_relation = this.incorporate(type='materializedview') %}

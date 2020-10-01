@@ -3,6 +3,8 @@
 {% set unique_key = config.get('unique_key') %}
 {%- set materialization_database = config.require('materialization_database') %}
 {%- set materialization_schema = config.require('materialization_schema') %}
+{% set partition = config.get('partition') %}
+{% set sort = config.get('sort') %}
 {%- set identifier = model['alias'] -%}
 {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
 {%- set target_relation = this.incorporate(type='view') %}
@@ -37,7 +39,7 @@
 {% endif %}
 {{ drop_relation_if_exists(target_table) }}
 {% call statement('main') %}
-  {{ create_table_as(False, target_table, build_sql) }}
+  {{ dremio_create_table_as(False, target_table, build_sql, partition, sort) }}
 {% endcall %}
 {% call statement('create view') %}
   {{ create_view_as(target_relation, 'select * from ' ~ target_table) }}

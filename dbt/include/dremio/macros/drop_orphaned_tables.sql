@@ -1,4 +1,4 @@
-{%- macro drop_cascade_orphaned_tables(materialization_database, materialization_schema) -%}
+{%- macro drop_recursive_orphaned_tables(materialization_database, materialization_schema) -%}
   {%- set path = ([materialization_database] + ([materialization_schema] if materialization_schema != 'no_schema' else [])) | join('.')  -%}
   {% call statement('list_orphan_tables', fetch_result=True) %}
     select

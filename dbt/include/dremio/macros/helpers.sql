@@ -1,3 +1,21 @@
+{% macro dremio_create_table_as(relation, sql, partition=none, sort=none) -%}
+  {%- set sql_header = config.get('sql_header', none) -%}
+
+  {{ sql_header if sql_header is not none }}
+
+  create table
+    {{ relation }}
+  {% if partition is not none %}
+    hash partition by ( {{ partition | map('tojson') | join(', ') }} )
+  {% endif %}
+  {% if sort is not none %}
+    localsort by ( {{ sort | map('tojson') | join(', ') }} )
+  {% endif %}
+  as (
+    {{ sql }}
+  )
+{% endmacro %}
+
 {% macro get_user_database() %}
   {{ '@' ~ target.user | trim }}
 {% endmacro %}

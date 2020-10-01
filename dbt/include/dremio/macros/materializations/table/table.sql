@@ -1,6 +1,8 @@
 {% materialization table, adapter='dremio' %}
   {%- set materialization_database = config.require('materialization_database') %}
   {%- set materialization_schema = config.require('materialization_schema') %}
+  {% set partition = config.get('partition') %}
+  {% set sort = config.get('sort') %}
   {%- set identifier = model['alias'] -%}
   {%- set full_refresh_mode = True -%}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
@@ -15,7 +17,7 @@
   {% set old_table, target_table = dremio_get_old_and_target_tables(target_relation, materialization_database, materialization_schema) %}
   {{ drop_relation_if_exists(target_table) }}
   {% call statement('main') %}
-    {{ create_table_as(False, target_table, sql) }}
+    {{ dremio_create_table_as(False, target_table, sql, partition, sort) }}
   {% endcall %}
   {% call statement('create view') %}
     {{ create_view_as(target_relation, 'select * from ' ~ target_table) }}

@@ -3,16 +3,16 @@
 # dbt-dremio
 [dbt](https://www.getdbt.com/)'s adapter for [dremio](https://www.dremio.com/)
 
-If you are reading this documentation, I assume you already know well both dbt and dremio. Please refer to their respective documentation. 
+If you are reading this documentation, I assume you already know well both dbt and dremio. Please refer to their respective documentation.
 
 # Installation
-dbt dependencies : 
+dbt dependencies :
  - dbt-core>=0.18.0,
  - pyodbc>=4.0.27
- 
-dremio dependency : 
+
+dremio dependency :
  - latest dremio's odbc driver
- 
+
 os dependency :
 - odbc (unixodbc-dev on linux)
 
@@ -77,8 +77,8 @@ I tried to keep things secure setting up a kind of logical interface between the
 
 ## Seed
 
-    CREATE TABLE AS 
-    SELECT * 
+    CREATE TABLE AS
+    SELECT *
     FROM VALUES()[,()]
 
 As dremio does not support query's bindings, the python value is converted as string, quoted and casted in the sql type.
@@ -91,7 +91,7 @@ As dremio does not support query's bindings, the python value is converted as st
 
     CREATE TABLE AS
     {{ sq }}
-     
+
 ## Incremental
 As we still have the old data when new data is created, the new table is filled with :
 
@@ -117,29 +117,28 @@ As we still have the old data when new data is created, the new table is filled 
     {% endif %}
 
 ## Raw Reflection
-A raw reflection is a view's materialization, with a refresh policy, handled internally by dremio.
+A raw reflection is a dataset's materialization, with a refresh policy, handled internally by dremio.
 
 configuration|type|required|default
 -|-|-|-
-view|the related model's name|yes|
+dataset|the related model's name|yes|
 display| the list of columns|no|all columns
-partition| the list of partitioning columns|no[
+partition| the list of partitioning columns|no|
 sort| the list of sorting columns|no|
 distribute| the list of distributing columns|no|
 
 ## Aggregate Reflection
 
-An aggregate reflection is a view's materialization, containing pre aggregated measures on dimensions, with a refresh policy, handled internally by dremio.
+An aggregate reflection is a dataset's materialization, containing pre aggregated measures on dimensions, with a refresh policy, handled internally by dremio.
 
 configuration|type|required|default
 -|-|-|-
-view|the related model's name|yes|
+dataset|the related model's name|yes|
 dimensions| the list of dimension columns|no|all columns whom type is not in 'float', 'double' and 'decimal'
 measures| the list of measurement columns|no|all columns whom type is in 'float', 'double' and 'decimal'
 partition| the list of partitioning columns|no|
 sort| the list of sorting columns|no|
 distribute| the list of distributing columns|no|
-
 
 ## File
 
@@ -188,4 +187,3 @@ You will find in [the macros' directory](https://github.com/fabrice-etanchaud/db
           user: dremio
           password: dremiosecretpassword
       target: unmanaged
-

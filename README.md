@@ -178,7 +178,7 @@ Thanks to [Ronald Damhof's article](https://prudenza.typepad.com/files/english--
 
 In an unmanaged environment, if no target database is provided, all models are materialized in the user's home space, under the target schema.
 
-In a managed environment, target and custom databases and schemas are used as usual. If no target database is provided,  `target.profile_name` will be used as the default value.
+In a managed environment, target and custom databases and schemas are used as usual. If no target database is provided,  `target.environment` will be used as the default value.
 
 You will find in [the macros' directory](https://github.com/fabrice-etanchaud/dbt-dremio/tree/master/dbt/include/dremio/macros) an environment aware implementation for custom database and schema names.
 

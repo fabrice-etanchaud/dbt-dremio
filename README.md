@@ -1,6 +1,6 @@
 ![dbt-dremio](https://www.dremio.com/img/blog/gnarly-wave-data-lake.png)
 
-> *This project is developed during my spare time, along side my lead dev position at [MAIF-VIE](http://www.maif.fr), and aims to provide a competitive replacement solution for our current ETL stack.*
+> *This project is developed during my spare time, along side my lead dev position at [MAIF-VIE](http://www.maif.fr), and aims to provide a competitive alternative solution for our current ETL stack.*
 
 # dbt-dremio
 [dbt](https://www.getdbt.com/)'s adapter for [dremio](https://www.dremio.com/)

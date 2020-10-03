@@ -19,7 +19,7 @@ os dependency :
 `pip install dbt-dremio`
 
 # Relation types
-A dremio's relation can be a view or a table. A reflection is a special kind of table : a view's materialization with a refresh policy.
+In dbt's world, A dremio's dataset can be either a `view` or a `table`. A dremio's reflection - a dataset's materialization with a refresh policy - will be mapped to a dbt's `materializedview`.
 
 # Databases
 As Dremio is a federation tool, dbt's queries can span locations and so, in dremio's adapter, databases are first class citizens.
@@ -50,6 +50,17 @@ Because dremio accepts almost any string character in the objects' names, the ad
  - if schema is equal to `no_schema`, the schema will not be included, leading to a simple `"database"."identifier"` being rendered
  - if schema spans multiple folders, each folder's name will be double quoted, leading to `"database"."folder"."sub-folder"."sub-sub-folder"."identifier"`.
 
+# Sources
+
+## Environments
+
+A same dremio installation could handle several data environments. In order to group sources by environment, you can use the undocumented `target.profile_name` or the adapter specific `environment` configuration to map environments between dremio and dbt :
+
+ - dremio's side: prefix all the sources' names of a specific environment `prd` with the environment's name, for example : `prd_crm, prd_hr, prd_accounting`
+ - dbt's side: prefix all source's database configs like this : `{{target.environment}}_crm` or `{{target.profile_name}}_crm`
+
+That way you can configure seperately input sources and output target `database`.
+
 # Materializations
 
 ## Dremio's SQL specificities
@@ -75,7 +86,7 @@ I tried to keep things secure setting up a kind of logical interface between the
 adapter's specific configuration|type|required|default
 -|-|-|-
 materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
-materialization_schema||no|`no_schema`
+materialization_schema||no|`target.environment` (we don't want the environments to share the same underlying table)
 
     CREATE TABLE AS
     SELECT *
@@ -92,7 +103,7 @@ As dremio does not support query's bindings, the python value is converted as st
 adapter's specific configuration|type|required|default
 -|-|-|-
 materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
-materialization_schema||no|`no_schema`
+materialization_schema||no|`target.environment`
 partition| the list of partitioning columns|no|
 sort| the list of sorting columns|no|
 
@@ -104,7 +115,7 @@ sort| the list of sorting columns|no|
 adapter's specific configuration|type|required|default
 -|-|-|-
 materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
-materialization_schema||no|`no_schema`
+materialization_schema||no|`target.environment`
 partition| the list of partitioning columns|no|
 sort| the list of sorting columns|no|
 
@@ -161,14 +172,6 @@ This materialization creates a table without a view interface. It's an easy way 
 
 # Connection
 Be careful to provide the right odbc driver's name in the adapter specific `driver` attribute, the one you gave to your dremio's odbc driver installation.
-
-## Environments
-
-You can use the undocumented `target.profile_name` or the adapter specific `environment` attribute as a way to map environments between dremio and dbt :
-
- - dremio's side: prefix all the sources' names of a specific environment `prd` with the environment's name, for example : `prd_crm, prd_hr, prd_accounting`
- - dbt's side: prefix all source's database configs with `{{target.environment}}_` or `{{target.profile_name}}_`
-That way you can configure seperately input sources and output target `database`.
 
 ## Managed or unmanaged target
 Thanks to [Ronald Damhof's article](https://prudenza.typepad.com/files/english---the-data-quadrant-model-interview-ronald-damhof.pdf), I wanted to have a clear separation between managed environments (prod, preprod...) and unmanaged ones (developers' environments). So there are two distinct targets : managed and unmanaged.

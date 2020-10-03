@@ -72,7 +72,7 @@ I tried to keep things secure setting up a kind of logical interface between the
 
 ## Seed
 
-configuration|type|required|default
+adapter's specific configuration|type|required|default
 -|-|-|-
 materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
 materialization_schema||no|`no_schema`
@@ -89,7 +89,7 @@ As dremio does not support query's bindings, the python value is converted as st
 
 ## Table
 
-configuration|type|required|default
+adapter's specific configuration|type|required|default
 -|-|-|-
 materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
 materialization_schema||no|`no_schema`
@@ -101,7 +101,7 @@ sort| the list of sorting columns|no|
 
 ## Incremental
 
-configuration|type|required|default
+adapter's specific configuration|type|required|default
 -|-|-|-
 materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
 materialization_schema||no|`no_schema`
@@ -134,7 +134,7 @@ As we still have the old data when new data is created, the new table is filled 
 ## Raw Reflection
 A raw reflection is a dataset's materialization, with a refresh policy, handled internally by dremio.
 
-configuration|type|required|default
+adapter's specific configuration|type|required|default
 -|-|-|-
 dataset|the related model's name|yes|
 display| the list of columns|no|all columns
@@ -146,7 +146,7 @@ distribute| the list of distributing columns|no|
 
 An aggregate reflection is a dataset's materialization, containing pre aggregated measures on dimensions, with a refresh policy, handled internally by dremio.
 
-configuration|type|required|default
+adapter's specific configuration|type|required|default
 -|-|-|-
 dataset|the related model's name|yes|
 dimensions| the list of dimension columns|no|all columns whom type is not in 'float', 'double' and 'decimal'

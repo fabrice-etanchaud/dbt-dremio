@@ -42,7 +42,7 @@
 
 {% materialization seed, adapter='dremio' %}
   {%- set materialization_database = config.get('materialization_database', '$scratch') %}
-  {%- set materialization_schema = config.get('materialization_schema', 'no_schema') %}
+  {%- set materialization_schema = config.get('materialization_schema', target.environment) %}
   {%- set identifier = model['alias'] -%}
   {%- set full_refresh_mode = True -%}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}

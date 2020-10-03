@@ -23,8 +23,8 @@
   {% set distribute = config.get('distribute') %}
   {% set dataset = ref(dataset) %}
   {% set identifier = model['alias'] %}
-  {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
-  {%- set target_relation = this.incorporate(type='materializedview') %}
+  {%- set old_relation = adapter.get_relation(database=dataset.database, schema=dataset.schema, identifier=identifier) -%}
+  {%- set target_relation = this.incorporate(database=dataset.database, schema=dataset.schema, type='materializedview') %}
   {% set columns = adapter.get_columns_in_relation(dataset) %}
   {% if dimensions is none %}
     {% set dimensions = columns | rejectattr('dtype', 'in', ['decimal', 'float', 'double']) | map(attribute='name') | list %}

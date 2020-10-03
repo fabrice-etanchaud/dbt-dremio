@@ -2,7 +2,7 @@
 {%- set full_refresh_mode = (flags.FULL_REFRESH == True) -%}
 {% set unique_key = config.get('unique_key') %}
 {%- set materialization_database = config.get('materialization_database', '$scratch') %}
-{%- set materialization_schema = config.get('materialization_schema', 'no_schema') %}
+{%- set materialization_schema = config.get('materialization_schema', target.environment) %}
 {% set partition = config.get('partition') %}
 {% set sort = config.get('sort') %}
 {%- set identifier = model['alias'] -%}

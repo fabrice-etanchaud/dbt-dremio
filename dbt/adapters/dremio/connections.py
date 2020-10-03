@@ -19,7 +19,7 @@ class DremioCredentials(Credentials):
     host: str
     UID: str
     PWD: str
-    environment: Optional[str]
+    environment: str
     database: Optional[str]
     schema: Optional[str]
     port: Optional[int] = 31010

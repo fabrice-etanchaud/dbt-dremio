@@ -6,7 +6,7 @@
       {%- elif default_database is not none -%}
         {{ default_database }}
       {%- else -%}
-        {{ target.profile_name }}
+        {{ target.environment }}
       {%- endif -%}
     {%- else -%}
       {%- if default_database is not none %}

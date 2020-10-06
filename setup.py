@@ -12,7 +12,7 @@ setup(
     description=description,
     long_description=description,
     author="Fabrice Etanchaud",
-    author_email="fabrice.etanchaud@maif.fr",
+    author_email="fabrice.etanchaud@netc.fr",
     url="https://github.com/fabrice-etanchaud/dbt-dremio",
     packages=find_packages(),
     package_data={

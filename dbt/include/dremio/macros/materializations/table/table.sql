@@ -1,6 +1,6 @@
 {% materialization table, adapter='dremio' %}
-  {%- set materialization_database = config.get('materialization_database', '$scratch') %}
-  {%- set materialization_schema = config.get('materialization_schema', target.environment) %}
+  {%- set materialization_database = config.get('materialization_database', default='$scratch') %}
+  {%- set materialization_schema = config.get('materialization_schema', default=target.environment) %}
   {% set partition = config.get('partition') %}
   {% set sort = config.get('sort') %}
   {%- set identifier = model['alias'] -%}
@@ -17,7 +17,7 @@
   {% set old_table, target_table = dremio_get_old_and_target_tables(target_relation, materialization_database, materialization_schema) %}
   {{ drop_relation_if_exists(target_table) }}
   {% call statement('main') %}
-    {{ dremio_create_table_as(False, target_table, sql, partition, sort) }}
+    {{ dremio_create_table_as(target_table, sql, partition, sort) }}
   {% endcall %}
   {% call statement('create view') %}
     {{ create_view_as(target_relation, 'select * from ' ~ target_table) }}

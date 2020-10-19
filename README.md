@@ -21,11 +21,11 @@ os dependency :
 `pip install dbt-dremio`
 
 # Relation types
-In dbt's world, A dremio's dataset can be either a `view` or a `table`. A dremio's reflection - a dataset's materialization with a refresh policy - will be mapped to a dbt's `materializedview`.
+In dbt's world, A dremio dataset can be either a `view` or a `table`. A dremio reflection - a dataset materialization with a refresh policy - will be mapped to a dbt `materializedview`.
 
 # Databases
 As Dremio is a federation tool, dbt's queries can span locations and so, in dremio's adapter, databases are first class citizens.
-There are two kinds of dataset's locations : sources and spaces. Sources are mostly input locations, and spaces output ones, with exceptions :
+There are two kinds of dataset locations : sources and spaces. Sources are mostly input locations, and spaces output ones, with exceptions :
 
 location|can create table| can drop table |can create/drop view
 -|-|-|-
@@ -33,7 +33,7 @@ source|if CTAS (`CREATE TABLE AS`) is allowed on this source|if `DROP TABLE` is 
 space|only in the user's home space, and by manually uploading files in the UI|only in the UI|yes
 distributed shared storage (`$scratch` source)|yes|yes|no
 
-As you can see, using the SQL-DDL interface, the location's type implies the relation's type, so materialization's implementations do not have to take care of possible relation type mutations.
+As you can see, using the SQL-DDL interface, the location type implies the relation type, so materialization implementations do not have to take care of possible relation type mutations.
 
 The UI allows dots in a space's name : **the adapter does not handle that correctly**.
 
@@ -145,7 +145,7 @@ As we still have the old data when new data is created, the new table is filled 
     {% endif %}
 
 ## Raw Reflection
-A raw reflection is a dataset's materialization, with a refresh policy, handled internally by dremio.
+A raw reflection is a dataset materialization, with a refresh policy, handled internally by dremio.
 
 adapter's specific configuration|type|required|default
 -|-|-|-
@@ -157,7 +157,7 @@ distribute| the list of distributing columns|no|
 
 ## Aggregate Reflection
 
-An aggregate reflection is a dataset's materialization, containing pre aggregated measures on dimensions, with a refresh policy, handled internally by dremio.
+An aggregate reflection is a dataset materialization, containing pre aggregated measures on dimensions, with a refresh policy, handled internally by dremio.
 
 adapter's specific configuration|type|required|default
 -|-|-|-

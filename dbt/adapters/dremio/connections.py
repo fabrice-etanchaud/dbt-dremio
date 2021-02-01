@@ -7,10 +7,11 @@ import dbt.exceptions
 from dbt.adapters.base import Credentials
 from dbt.adapters.sql import SQLConnectionManager
 from dbt.adapters.dremio.relation import DremioRelation
+from dbt.contracts.connection import AdapterResponse
 from dbt.logger import GLOBAL_LOGGER as logger
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union, Any
 
 
 @dataclass
@@ -31,7 +32,7 @@ class DremioCredentials(Credentials):
         , 'pass': 'PWD'
         , 'password': 'PWD'
         , 'server': 'host'
-        , 'track' : 'environment'
+        , 'track': 'environment'
     }
 
     @property
@@ -48,6 +49,7 @@ class DremioCredentials(Credentials):
 #            self.database = '@' + self.UID
 #        if self.schema is None:
 #            self.schema = DremioRelation.no_schema
+
 
 class DremioConnectionManager(SQLConnectionManager):
     TYPE = 'dremio'
@@ -98,7 +100,7 @@ class DremioConnectionManager(SQLConnectionManager):
             con_str.append(f"UID={credentials.UID}")
             con_str.append(f"PWD={credentials.PWD}")
             if credentials.additional_parameters:
-              con_str.append(f"{credentials.additional_parameters}")
+                con_str.append(f"{credentials.additional_parameters}")
             con_str_concat = ';'.join(con_str)
             logger.debug(f'Using connection string: {con_str_concat}')
 
@@ -176,12 +178,17 @@ class DremioConnectionManager(SQLConnectionManager):
         return credentials
 
     @classmethod
+    def get_response(cls, cursor: pyodbc.Cursor) -> AdapterResponse:
+        rows = cursor.rowcount
+        message = 'OK' if rows == -1 else str(rows)
+        return AdapterResponse(
+            _message=message,
+            rows_affected=rows
+        )
+
+    @classmethod
     def get_status(cls, cursor):
-        if cursor.rowcount == -1:
-            status = 'OK'
-        else:
-            status = str(cursor.rowcount)
-        return status
+        return str(cls.get_response(cursor))
 
     def execute(self, sql, auto_begin=True, fetch=False):
         _, cursor = self.add_query(sql, auto_begin)

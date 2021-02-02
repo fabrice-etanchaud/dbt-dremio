@@ -13,6 +13,8 @@ from dbt.logger import GLOBAL_LOGGER as logger
 from dataclasses import dataclass
 from typing import Optional, Union, Any
 
+from typing import Tuple, Union
+import agate
 
 @dataclass
 class DremioCredentials(Credentials):
@@ -93,7 +95,7 @@ class DremioConnectionManager(SQLConnectionManager):
         credentials = connection.credentials
 
         try:
-            con_str = ["ConnectionType=Direct", "AuthenticationType=Plain"]
+            con_str = ["ConnectionType=Direct", "AuthenticationType=Plain", "QueryTimeout=0"]
             con_str.append(f"Driver={{{credentials.driver}}}")
             con_str.append(f"HOST={credentials.host}")
             con_str.append(f"PORT={credentials.port}")
@@ -186,16 +188,16 @@ class DremioConnectionManager(SQLConnectionManager):
             rows_affected=rows
         )
 
-    @classmethod
-    def get_status(cls, cursor):
-        return str(cls.get_response(cursor))
-
-    def execute(self, sql, auto_begin=True, fetch=False):
+    def execute(
+        self, sql: str, auto_begin: bool = False, fetch: bool = False
+    ) -> Tuple[Union[AdapterResponse, str], agate.Table]:
+        sql = self._add_query_comment(sql)
         _, cursor = self.add_query(sql, auto_begin)
-        #status = self.get_status(cursor)
         response = self.get_response(cursor)
+        fetch = True
         if fetch:
             table = self.get_result_from_cursor(cursor)
         else:
             table = dbt.clients.agate_helper.empty_table()
+        cursor.close()
         return response, table

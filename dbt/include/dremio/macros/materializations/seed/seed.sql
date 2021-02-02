@@ -66,7 +66,6 @@
   {% call statement('create view') %}
     {{ create_view_as(target_relation, 'select * from ' ~ target_table) }}
   {% endcall %}
-  {{ drop_relation_if_exists(old_table) }}
   {% do persist_docs(target_relation, model) %}
   {{ run_hooks(post_hooks, inside_transaction=True) }}
   -- `COMMIT` happens here

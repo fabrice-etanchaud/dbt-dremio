@@ -169,7 +169,7 @@ class DremioConnectionManager(SQLConnectionManager):
                 cursor.execute(sql, bindings)
 
             logger.debug("SQL status: {} in {:0.2f} seconds".format(
-                         self.get_status(cursor), (time.time() - pre)))
+                         self.get_response(cursor), (time.time() - pre)))
 
             return connection, cursor
 
@@ -192,9 +192,10 @@ class DremioConnectionManager(SQLConnectionManager):
 
     def execute(self, sql, auto_begin=True, fetch=False):
         _, cursor = self.add_query(sql, auto_begin)
-        status = self.get_status(cursor)
+        #status = self.get_status(cursor)
+        response = self.get_response(cursor)
         if fetch:
             table = self.get_result_from_cursor(cursor)
         else:
             table = dbt.clients.agate_helper.empty_table()
-        return status, table
+        return response, table

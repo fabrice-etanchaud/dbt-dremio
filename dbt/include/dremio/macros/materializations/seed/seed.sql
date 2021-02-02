@@ -49,7 +49,7 @@
   {% set target_relation = this.incorporate(type='view') %}
   {%- set exists_as_table = (old_relation is not none and old_relation.is_table) -%}
     {%- set agate_table = load_agate_table() -%}
-  {%- do store_result('agate_table', status='OK', agate_table=agate_table) -%}
+  {%- do store_result('agate_table', response='OK', agate_table=agate_table) -%}
   {{ run_hooks(pre_hooks, inside_transaction=False) }}
   -- `BEGIN` happens here:
   {{ run_hooks(pre_hooks, inside_transaction=True) }}

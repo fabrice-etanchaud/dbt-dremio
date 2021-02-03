@@ -9,7 +9,7 @@ If you are reading this documentation, I assume you already know well both dbt a
 
 # Installation
 dbt dependencies :
- - dbt-core>=0.18.0,
+ - dbt-core=0.19.0,
  - pyodbc>=4.0.27
 
 dremio dependency :
@@ -70,7 +70,7 @@ That way you can configure seperately input sources and output target `database`
 Given that :
 
 - tables and views cannot coexist in the same schema
-- there are no transactions (at DDL level),
+- there are no transactions yet (at DDL level, but [Nessie](https://projectnessie.org/) is on its way),
 - there is no `ALTER TABLE|VIEW RENAME TO`command
 - you can `CREATE OR REPLACE` a view, but only `CREATE` a table,
 - data can only be added in tables with a CTAS,
@@ -81,14 +81,14 @@ I tried to keep things secure setting up a kind of logical interface between the
  - each new version of the model's underlying data is first stored in a new table, and then referenced atomically (via a `CREATE OR REPLACE VIEW`) by the interface view. The table containing the old version of the underlying data can then be dropped : a kind of pedantic blue/green deployement at model's level.
  - the coexistence of old and new data versions helps overcoming the lack of SQL-DML commands, see for example the `incremental` implementation.
 
-> This could change in near future, as Dremio's CEO Tomer Shiran posted in discourse that [Apache Iceberg](https://iceberg.apache.org/) could be included by the end of the year, bringing INSERT [OVERWRITE] to dremio, challenging a well known cloud datawarehouse in the same temperatures...
+> This could change in near future, as Dremio's CEO Tomer Shiran posted in discourse that [Apache Iceberg](https://iceberg.apache.org/) should be soon included, bringing INSERT [OVERWRITE] to dremio, challenging a well known cloud datawarehouse in the same temperatures...
 
 ## Seed
 
 adapter's specific configuration|type|required|default
 -|-|-|-
 materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
-materialization_schema||no|`target.environment` (we don't want the environments to share the same underlying table)
+materialization_schema||no|model's rendering `database[.schema]`, without the identifier part (we don't want the environments to share the same underlying table)
 
     CREATE TABLE AS
     SELECT *
@@ -105,7 +105,7 @@ As dremio does not support query's bindings, the python value is converted as st
 adapter's specific configuration|type|required|default
 -|-|-|-
 materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
-materialization_schema||no|`target.environment`
+materialization_schema||no|model's rendering `database[.schema]`, without the identifier part 
 partition| the list of partitioning columns|no|
 sort| the list of sorting columns|no|
 
@@ -117,7 +117,7 @@ sort| the list of sorting columns|no|
 adapter's specific configuration|type|required|default
 -|-|-|-
 materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
-materialization_schema||no|`target.environment`
+materialization_schema||no|model's rendering `database[.schema]`, without the identifier part 
 partition| the list of partitioning columns|no|
 sort| the list of sorting columns|no|
 

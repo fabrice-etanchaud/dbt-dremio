@@ -28,14 +28,14 @@
   {% endif %}
 {% endmacro %}
 
-{% macro dremio_get_old_and_target_tables(view, materialization_database, materialization_schema) %}
-  {% set materialization_schema = ([materialization_schema, view.database] + ([ view.schema ] if view.schema != 'no_schema' else [])) | join ('.') %}
+{% macro old_dremio_get_old_and_target_tables(view, materialization_database, materialization_schema) %}
+  {% set materialization_schema = materialization_schema if materialization_schema != 'no_schema' else ([view.database] + ([ view.schema ] if view.schema != 'no_schema' else [])) | join ('.') %}
   {% set color_table = api.Relation.create(database=materialization_database, schema=materialization_schema, identifier=view.identifier, type='table') %}
   {{ return([color_table, color_table]) }}
 {% endmacro %}
 
-{% macro old_dremio_get_old_and_target_tables(view, materialization_database, materialization_schema) %}
-  {% set materialization_schema = ([materialization_schema, view.database] + ([ view.schema ] if view.schema != 'no_schema' else [])) | join ('.') %}
+{% macro dremio_get_old_and_target_tables(view, materialization_database, materialization_schema) %}
+  {% set materialization_schema = materialization_schema if materialization_schema != 'no_schema' else ([view.database] + ([ view.schema ] if view.schema != 'no_schema' else [])) | join ('.') %}
   {% set blue_table = api.Relation.create(database=materialization_database, schema=materialization_schema, identifier=(view.identifier ~ '_blue'), type='table') %}
   {% set green_table = api.Relation.create(database=materialization_database, schema=materialization_schema, identifier=(view.identifier ~ '_green'), type='table') %}
   {% set blue_table_exists = load_relation(blue_table) is not none %}

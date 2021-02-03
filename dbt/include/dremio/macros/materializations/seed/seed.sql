@@ -42,7 +42,7 @@
 
 {% materialization seed, adapter='dremio' %}
   {%- set materialization_database = config.get('materialization_database', default='$scratch') %}
-  {%- set materialization_schema = config.get('materialization_schema', default=target.environment) %}
+  {%- set materialization_schema = config.get('materialization_schema', default='no_schema') %}
   {%- set identifier = model['alias'] -%}
   {%- set full_refresh_mode = True -%}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
@@ -66,6 +66,7 @@
   {% call statement('create view') %}
     {{ create_view_as(target_relation, 'select * from ' ~ target_table) }}
   {% endcall %}
+  {{ drop_relation_if_exists(old_table) }}
   {% do persist_docs(target_relation, model) %}
   {{ run_hooks(post_hooks, inside_transaction=True) }}
   -- `COMMIT` happens here

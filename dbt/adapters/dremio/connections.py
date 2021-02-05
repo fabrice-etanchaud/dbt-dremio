@@ -95,7 +95,7 @@ class DremioConnectionManager(SQLConnectionManager):
         credentials = connection.credentials
 
         try:
-            con_str = ["ConnectionType=Direct", "AuthenticationType=Plain", "QueryTimeout=0"]
+            con_str = ["ConnectionType=Direct", "AuthenticationType=Plain", "QueryTimeout=600"]
             con_str.append(f"Driver={{{credentials.driver}}}")
             con_str.append(f"HOST={credentials.host}")
             con_str.append(f"PORT={credentials.port}")

@@ -1,6 +1,5 @@
 {% macro dremio__create_schema(relation) -%}
-  {{ exceptions.raise_not_implemented(
-    'create_schema macro (' + relation.render() + ') not implemented yet for adapter ' + adapter.type()) }}
+  {{ log('create_schema macro (' + relation.render() + ') not implemented yet for adapter ' + adapter.type(), info=True) }}
 {% endmacro %}
 
 {% macro dremio__drop_schema(relation) -%}
@@ -12,7 +11,6 @@
   {%- set sql_header = config.get('sql_header', none) -%}
 
   {{ sql_header if sql_header is not none }}
-
   create table
     {{ relation }}
   as (

@@ -155,6 +155,16 @@ partition| the list of partitioning columns|no|
 sort| the list of sorting columns|no|
 distribute| the list of distributing columns|no|
 
+A raw reflection is defined in a .sql model file like this : 
+
+	 -- depends_on: {{ ref('my_vds') }}
+	{{ config(
+		materialized='raw_reflection'
+		,dataset='my_vds'
+		)
+	}}
+
+
 ## Aggregate Reflection
 
 An aggregate reflection is a dataset materialization, containing pre aggregated measures on dimensions, with a refresh policy, handled internally by dremio.
@@ -167,6 +177,16 @@ measures| the list of measurement columns|no|all columns whom type is in 'float'
 partition| the list of partitioning columns|no|
 sort| the list of sorting columns|no|
 distribute| the list of distributing columns|no|
+
+Aggregate reflections are declared just like raw reflections : 
+
+	 -- depends_on: {{ ref('my_vds') }}
+	{{ config(
+		materialized='aggregation_reflection'
+		,dataset='my_vds'
+		)
+	}}
+
 
 ## File
 

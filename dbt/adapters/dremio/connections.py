@@ -23,7 +23,7 @@ class DremioCredentials(Credentials):
     UID: str
     PWD: str
     environment: str
-    database: Optional[str]
+    database: str
     schema: Optional[str]
     port: Optional[int] = 31010
     additional_parameters: Optional[str] = None
@@ -40,6 +40,10 @@ class DremioCredentials(Credentials):
     @property
     def type(self):
         return 'dremio'
+
+    @property
+    def unique_field(self):
+        return self.host
 
     def _connection_keys(self):
         # return an iterator of keys to pretty-print in 'dbt debug'

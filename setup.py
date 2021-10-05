@@ -3,7 +3,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 package_name = "dbt-dremio"
-package_version = "0.19.0.1"
+package_version = "0.21.0"
 description = """The dremio adapter plugin for dbt (data build tool)"""
 
 setup(
@@ -24,7 +24,7 @@ setup(
         ]
     },
     install_requires=[
-        'dbt-core==0.19.0',
+        'dbt-core==0.21.0',
         'pyodbc>=4.0.27',
     ]
 )

@@ -163,6 +163,19 @@
 {% endmacro %}
 
 {% macro dremio__list_relations_without_caching(schema_relation) %}
+  {% set check_column_name_query %}
+  -- Dremio 22 uses "dataset_name" instead of "dataset" on sys.reflections
+  select 
+    case when count(column_name) = 1
+      then 'dataset'
+      else 'dataset_name'
+    end 
+  from information_schema.columns
+  where table_schema = 'sys'
+    and table_name   = 'reflections'
+    and column_name  = 'dataset'
+  {% endset %}
+  {% set dataset_col = run_query(check_column_name_query).columns[0].values()[0] %}
   {% call statement('list_relations_without_caching', fetch_result=True) -%}
     with t1(table_catalog, table_name, table_schema, table_type) as (
     select lower(case when position('.' in table_schema) > 0
@@ -179,15 +192,15 @@
     )
     ,r1(identifier_position, database_end_position, dataset, name, type) as (
         select
-            case when "RIGHT"(dataset, 1) = '"'
-                then length(dataset) - strpos(substr(reverse(dataset), 2), '"')
-                else length(dataset) - strpos(reverse(dataset), '.') + 2
+            case when "RIGHT"({{ dataset_col }}, 1) = '"'
+                then length({{ dataset_col }}) - strpos(substr(reverse({{ dataset_col }}), 2), '"')
+                else length({{ dataset_col }}) - strpos(reverse({{ dataset_col }}), '.') + 2
             end
-            ,case when "LEFT"(dataset, 1) = '"'
-                then strpos(substr(dataset, 2), '"') + 1
-                else strpos(dataset, '.') - 1
+            ,case when "LEFT"({{ dataset_col }}, 1) = '"'
+                then strpos(substr({{ dataset_col }}, 2), '"') + 1
+                else strpos({{ dataset_col }}, '.') - 1
             end
-            ,dataset
+            ,{{ dataset_col }}
             ,name
             ,type
         from sys.reflections

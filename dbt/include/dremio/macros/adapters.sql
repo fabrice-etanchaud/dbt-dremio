@@ -176,6 +176,7 @@
     and column_name  = 'dataset'
   {% endset %}
   {% set dataset_col = run_query(check_column_name_query).columns[0].values()[0] %}
+  {% set reflection_col = 'name' if dataset_col == 'dataset' else 'reflection_name' %}
   {% call statement('list_relations_without_caching', fetch_result=True) -%}
     with t1(table_catalog, table_name, table_schema, table_type) as (
     select lower(case when position('.' in table_schema) > 0
@@ -201,7 +202,7 @@
                 else strpos({{ dataset_col }}, '.') - 1
             end
             ,{{ dataset_col }}
-            ,name
+            ,{{ reflection_col }}
             ,type
         from sys.reflections
     )

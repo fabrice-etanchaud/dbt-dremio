@@ -164,7 +164,7 @@
 
 {% macro dremio__list_relations_without_caching(schema_relation) %}
   {% set check_column_name_query %}
-  -- Dremio 22 uses "dataset_name" instead of "dataset" on sys.reflections
+  -- Dremio 20 uses "dataset_name" instead of "dataset" on sys.reflections
   select 
     case when count(column_name) = 1
       then 'dataset'

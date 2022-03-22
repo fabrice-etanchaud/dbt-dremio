@@ -8,7 +8,9 @@ from dbt.adapters.base import Credentials
 from dbt.adapters.sql import SQLConnectionManager
 from dbt.adapters.dremio.relation import DremioRelation
 from dbt.contracts.connection import AdapterResponse
-from dbt.logger import GLOBAL_LOGGER as logger
+#from dbt.logger import GLOBAL_LOGGER as logger
+from dbt.events import AdapterLogger
+logger = AdapterLogger("dremio")
 
 from dataclasses import dataclass
 from typing import Optional, Union, Any

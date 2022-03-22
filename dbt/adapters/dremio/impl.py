@@ -6,7 +6,10 @@ from typing import List
 from typing import Optional
 import dbt.flags
 from dbt.adapters.base.relation import BaseRelation
-from dbt.logger import GLOBAL_LOGGER as logger
+#from dbt.logger import GLOBAL_LOGGER as logger
+from dbt.events import AdapterLogger
+logger = AdapterLogger("dremio")
+
 from dbt.adapters.base.meta import available
 
 import agate
@@ -67,17 +70,3 @@ class DremioAdapter(SQLAdapter):
                      .format(database, schema, relations))
         return relations
 
-
-    @available
-    def cache_added(self, relation: Optional[BaseRelation]) -> str:
-        """Cache a new relation in dbt. It will show up in `list relations`."""
-
-        if relation is None:
-            name = self.nice_connection_name()
-            raise_compiler_error(
-                'Attempted to cache a null relation for {}'.format(name)
-            )
-        if dbt.flags.USE_CACHE:
-            self.cache.add(relation)
-        # so jinja doesn't render things
-        return ''

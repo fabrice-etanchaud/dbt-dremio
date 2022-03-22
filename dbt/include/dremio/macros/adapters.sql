@@ -27,7 +27,26 @@
   )
 {% endmacro %}
 
+{% macro dremio__lookup_reflection_columns() -%}
+  {% set check_column_name_query %}
+    -- Dremio 20 uses "dataset_name" instead of "dataset" on sys.reflections
+    select 
+      case when count(column_name) = 1
+        then 'dataset'
+        else 'dataset_name'
+      end 
+    from information_schema.columns
+    where table_schema = 'sys'
+      and table_name   = 'reflections'
+      and column_name  = 'dataset'
+  {% endset %}
+  {{ return(run_query(check_column_name_query).columns[0].values()[0]) }}
+{%- endmacro %}
+
 {% macro dremio__get_columns_in_relation(relation) -%}
+  {% set dataset_col = dremio__lookup_reflection_columns() %}
+  {% set reflection_col = 'reflection_name' if dataset_col == 'dataset_name' else 'name' %}
+  {% set display_col = 'display_columns' if dataset_col == 'dataset_name' else 'displayColumns' %}
   {% call statement('get_columns_in_relation', fetch_result=True) %}
     with cols as (
       select lower(case when position('.' in table_schema) > 0
@@ -56,7 +75,7 @@
                   then substring(table_schema, position('.' in table_schema) + 1)
                   else 'no_schema'
               end)
-          ,lower(name)
+          ,lower({{ reflection_col }})
           ,lower(column_name)
           ,lower(data_type)
           ,character_maximum_length
@@ -65,8 +84,8 @@
           ,ordinal_position
       from sys.reflections
       join information_schema.columns
-          on (columns.table_schema || '.' || columns.table_name = replace(dataset, '"', '')
-              and (strpos(',' || replace(displayColumns, ' ', '') || ',', ',' || column_name || ',') > 0
+          on (columns.table_schema || '.' || columns.table_name = replace({{ dataset_col }}, '"', '')
+              and (strpos(',' || replace({{ display_col }}, ' ', '') || ',', ',' || column_name || ',') > 0
                   or strpos(',' || replace(dimensions, ' ', '') || ',', ',' || column_name || ',') > 0
                   or strpos(',' || replace(measures, ' ', '') || ',', ',' || column_name || ',') > 0))
     )
@@ -163,6 +182,8 @@
 {% endmacro %}
 
 {% macro dremio__list_relations_without_caching(schema_relation) %}
+  {% set dataset_col = dremio__lookup_reflection_columns() %}
+  {% set reflection_col = 'reflection_name' if dataset_col == 'dataset_name' else 'name' %}
   {% call statement('list_relations_without_caching', fetch_result=True) -%}
     with t1(table_catalog, table_name, table_schema, table_type) as (
     select lower(case when position('.' in table_schema) > 0
@@ -179,16 +200,16 @@
     )
     ,r1(identifier_position, database_end_position, dataset, name, type) as (
         select
-            case when "RIGHT"(dataset, 1) = '"'
-                then length(dataset) - strpos(substr(reverse(dataset), 2), '"')
-                else length(dataset) - strpos(reverse(dataset), '.') + 2
+            case when "RIGHT"({{ dataset_col }}, 1) = '"'
+                then length({{ dataset_col }}) - strpos(substr(reverse({{ dataset_col }}), 2), '"')
+                else length({{ dataset_col }}) - strpos(reverse({{ dataset_col }}), '.') + 2
             end
-            ,case when "LEFT"(dataset, 1) = '"'
-                then strpos(substr(dataset, 2), '"') + 1
-                else strpos(dataset, '.') - 1
+            ,case when "LEFT"({{ dataset_col }}, 1) = '"'
+                then strpos(substr({{ dataset_col }}, 2), '"') + 1
+                else strpos({{ dataset_col }}, '.') - 1
             end
-            ,dataset
-            ,name
+            ,{{ dataset_col }}
+            ,{{ reflection_col }}
             ,type
         from sys.reflections
     )

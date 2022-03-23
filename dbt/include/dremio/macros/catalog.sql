@@ -41,34 +41,34 @@
             then substring(table_schema, position('.' in table_schema) + 1)
             else 'no_schema'
         end)
-    ,lower(name)
+    ,lower(reflection_name)
     ,'materializedview'
     ,initcap(type) || ' Reflection'
     ,lower(column_name)
     ,ordinal_position
     ,lower(data_type)
     ,case
-        when strpos(',' || replace(displayColumns, ' ', '') || ',', ',' || column_name || ',') > 0 then 'Display'
+        when strpos(',' || replace(display_columns, ' ', '') || ',', ',' || column_name || ',') > 0 then 'Display'
         when strpos(',' || replace(dimensions, ' ', '') || ',', ',' || column_name || ',') > 0 then 'Dimension'
         when strpos(',' || replace(measures, ' ', '') || ',', ',' || column_name || ',') > 0 then 'Measure'
     end
     || case
-        when strpos(',' || replace(sortColumns, ' ', '') || ',', ',' || column_name || ',') > 0 then ', Sort'
+        when strpos(',' || replace(sort_columns, ' ', '') || ',', ',' || column_name || ',') > 0 then ', Sort'
         else ''
     end
     || case
-        when strpos(',' || replace(partitionColumns, ' ', '') || ',', ',' || column_name || ',') > 0 then ', Partition'
+        when strpos(',' || replace(partition_columns, ' ', '') || ',', ',' || column_name || ',') > 0 then ', Partition'
         else ''
     end
     || case
-        when strpos(',' || replace(distributionColumns, ' ', '') || ',', ',' || column_name || ',') > 0 then ', Distribute'
+        when strpos(',' || replace(distribution_columns, ' ', '') || ',', ',' || column_name || ',') > 0 then ', Distribute'
         else ''
     end
     ,cast(null as varchar)
   from sys.reflections
   join information_schema.columns
-      on (columns.table_schema || '.' || columns.table_name = replace(dataset, '"', '')
-          and (strpos(',' || replace(displayColumns, ' ', '') || ',', ',' || column_name || ',') > 0
+      on (columns.table_schema || '.' || columns.table_name = replace(dataset_name, '"', '')
+          and (strpos(',' || replace(display_columns, ' ', '') || ',', ',' || column_name || ',') > 0
               or strpos(',' || replace(dimensions, ' ', '') || ',', ',' || column_name || ',') > 0
               or strpos(',' || replace(measures, ' ', '') || ',', ',' || column_name || ',') > 0))
   )

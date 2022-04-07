@@ -69,4 +69,3 @@ class DremioAdapter(SQLAdapter):
         logger.debug('with database={}, schema={}, relations={}'
                      .format(database, schema, relations))
         return relations
-

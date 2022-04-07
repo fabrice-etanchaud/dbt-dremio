@@ -18,8 +18,11 @@ class DremioIncludePolicy(Policy):
 class DremioRelation(BaseRelation):
     quote_policy: DremioQuotePolicy = DremioQuotePolicy()
     include_policy: DremioIncludePolicy = DremioIncludePolicy()
-    quote_character: str = '"'
     no_schema = 'no_schema'
+
+    def __post_init__(self):
+        if self.path.schema is None:
+              self.path.schema = DremioRelation.no_schema
 
     def _render_iterator(
         self

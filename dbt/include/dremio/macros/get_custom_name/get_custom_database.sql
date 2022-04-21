@@ -1,4 +1,5 @@
 {% macro dremio__generate_database_name(custom_database_name=none, node=none) -%}
+<<<<<<< HEAD
   {%- set default_database = target.database
     if node.config.materialized in [ 'view', 'raw_reflection', 'aggregation_reflection']
     else target.datalake -%}
@@ -18,4 +19,17 @@
       {{ custom_database_name }}
 
   {%- endif -%}
+=======
+    {%- set default_database = target.database -%}
+    {%- if custom_database_name is none -%}
+
+        {{ default_database }}
+
+    {%- else -%}
+
+        {{ custom_database_name }}
+
+    {%- endif -%}
+
+>>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
 {%- endmacro %}

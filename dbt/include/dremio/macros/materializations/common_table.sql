@@ -31,6 +31,10 @@
 
 {{ run_hooks(post_hooks) }}
 
+<<<<<<< HEAD
 {{ return({'relations': [target_table, target_view] }) }}
+=======
+{{ return({'relations': [target_view] }) }}
+>>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
 
 {%- endmacro -%}

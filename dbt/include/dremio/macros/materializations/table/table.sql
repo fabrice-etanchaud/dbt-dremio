@@ -1,5 +1,6 @@
 {% materialization table, adapter = 'dremio' %}
 
+<<<<<<< HEAD
   {%- set identifier = model['alias'] -%}
   {%- set twin_strategy = config.get('twin_strategy', validator=validation.any[basestring]) or 'clone' -%}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
@@ -36,5 +37,8 @@
   {{ run_hooks(post_hooks) }}
 
   {{ return({'relations': [target_relation]})}}
+=======
+  {{ return(common_table(sql)) }}
+>>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
 
 {% endmaterialization %}

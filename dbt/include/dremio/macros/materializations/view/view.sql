@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% materialization view, adapter='dremio' %}
   {%- set identifier = model['alias'] -%}
   {%- set twin_strategy = config.get('twin_strategy', validator=validation.any[basestring]) or 'clone' -%}
@@ -29,3 +30,8 @@
   {{ return({'relations': [target_relation]}) }}
 
 {% endmaterialization %}
+=======
+{% materialization view, adapter='dremio' -%}
+    {{ return(create_or_replace_view()) }}
+{%- endmaterialization %}
+>>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc

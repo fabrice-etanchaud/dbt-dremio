@@ -1,4 +1,5 @@
 {% macro dremio__generate_schema_name(custom_schema_name, node) -%}
+<<<<<<< HEAD
   {%- set default_schema = target.schema
     if node.config.materialized in ['view', 'raw_reflection', 'aggregation_reflection']
     else target.root_path -%}
@@ -18,4 +19,18 @@
       {{ custom_schema_name }}
 
   {%- endif -%}
+=======
+
+    {%- set default_schema = target.schema -%}
+    {%- if custom_schema_name is none -%}
+
+        {{ default_schema }}
+
+    {%- else -%}
+
+        {{ custom_schema_name | trim }}
+
+    {%- endif -%}
+
+>>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
 {%- endmacro %}

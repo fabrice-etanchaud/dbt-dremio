@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {#
 /**
  * Parses a CTAS statement.
@@ -12,20 +11,15 @@
  */
 #}
 
-=======
->>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
 {% macro dremio__create_table_as(temporary, relation, sql) -%}
   {%- set sql_header = config.get('sql_header', none) -%}
 
   {{ sql_header if sql_header is not none }}
 
   create table {{ relation }}
-<<<<<<< HEAD
   {{ partition_method() }} {{ config_cols("partition by") }}
   {{ config_cols("distribute by") }}
   {{ config_cols("localsort by") }}
-=======
->>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
   {{ store_as_clause() }}
   {{ single_writer_clause() }}
   as (
@@ -33,7 +27,6 @@
   )
 {%- endmacro -%}
 
-<<<<<<< HEAD
 {% macro config_cols(label) %}
   {%- set cols = config.get(label | replace(" ", "_"), validator=validation.any[list, basestring]) -%}
   {%- if cols is not none %}
@@ -63,8 +56,6 @@
   {%- endif %}
 {%- endmacro -%}
 
-=======
->>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
 {%- macro single_writer_clause() -%}
   {%- set single_writer = config.get('single_writer', validator=validation.any[boolean]) -%}
   {%- if single_writer is not none and single_writer -%}

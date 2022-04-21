@@ -26,10 +26,6 @@ class DremioRelation(BaseRelation):
         if self.path.schema is None:
               self.path.schema = DremioRelation.no_schema
 
-    def __post_init__(self):
-        if self.path.schema is None:
-              self.path.schema = DremioRelation.no_schema
-
     def _render_iterator(
         self
     ) -> Iterator[Tuple[Optional[ComponentName], Optional[str]]]:

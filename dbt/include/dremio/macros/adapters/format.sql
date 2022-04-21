@@ -19,11 +19,7 @@ for 'json' :
   {%- set options = [] -%}
   {%- set key = 'type' -%}
   {%- set type = config.get(key, validator=validation.any[basestring]) -%}
-<<<<<<< HEAD
   {%- if type in ['text', 'json', 'arrow', 'parquet'] -%}
-=======
-  {%- if type in ['text', 'json', 'arrow', 'parquet', 'iceberg'] -%}
->>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
     {%- do options.append(key ~ "=>'" ~ type ~ "'") -%}
     {%- if type == 'text' -%}
       {%- for key in ['fieldDelimiter', 'lineDelimiter', 'quote', 'comment', 'escape'] -%}
@@ -49,18 +45,6 @@ for 'json' :
   {{ return((options | join(', ')) if options | length > 0 else none) }}
 {%- endmacro -%}
 
-<<<<<<< HEAD
-=======
-{% macro store_as_clause() -%}
-  {%- set options = format_options() -%}
-  {%- if options is not none -%}
-  store as (
-    {{ options }}
-  )
-  {%- endif -%}
-{%- endmacro -%}
-
->>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
 {% macro render_with_format_options(target_table) %}
   {%- set options = format_options() -%}
   {% if options is not none -%}

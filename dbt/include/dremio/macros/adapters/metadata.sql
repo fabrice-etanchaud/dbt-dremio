@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {% macro dremio__get_catalog(information_schema, schemas) -%}
 
   {%- call statement('catalog', fetch_result=True) -%}
@@ -99,14 +98,6 @@
 {%- endmacro %}
 
 {% macro dremio__list_schemas(database) -%}
-=======
-{% macro dremio__information_schema_name(database) -%}
-    INFORMATION_SCHEMA
-{%- endmacro %}
-
-{% macro dremio__list_schemas(database) -%}
-{{ log("database:" ~ database, info=True) }}
->>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
   {% set sql %}
     with schemata as (
         select lower(case when position('.' in schema_name) > 0
@@ -126,7 +117,6 @@
   {{ return(run_query(sql)) }}
 {% endmacro %}
 
-<<<<<<< HEAD
 {% macro dremio__check_schema_exists(information_schema, schema) -%}
   {% set sql -%}
     with schemata as (
@@ -149,10 +139,6 @@
 {% endmacro %}
 
 {% macro dremio__list_relations_without_caching(schema_relation) %}
-=======
-{% macro dremio__list_relations_without_caching(schema_relation) %}
-{{ log("schema_relation:" ~ schema_relation, info=True) }}
->>>>>>> e8b196d307d9e0471f88722c45fdb43ac33c63dc
   {% call statement('list_relations_without_caching', fetch_result=True) -%}
     with t1(table_catalog, table_name, table_schema, table_type) as (
     select lower(case when position('.' in table_schema) > 0

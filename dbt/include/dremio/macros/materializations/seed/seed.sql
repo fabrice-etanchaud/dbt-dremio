@@ -1,76 +1,48 @@
-{% macro dremio__create_csv_table(model, agate_table) %}
-  {{ exceptions.raise_not_implemented(
-    'create_csv_table macro not implemented for adapter '+adapter.type()) }}
-{% endmacro %}
+{% materialization seed, adapter = 'dremio' %}
 
-{% macro dremio__reset_csv_table(model, full_refresh, old_relation, agate_table) %}
-  {{ exceptions.raise_not_implemented(
-    'reset_csv_table macro not implemented for adapter '+adapter.type()) }}
-{% endmacro %}
-
-{% macro dremio__load_csv_rows(model, agate_table) %}
-  {{ exceptions.raise_not_implemented(
-    'load_csv_rows macro not implemented for adapter '+adapter.type()) }}
-{% endmacro %}
-
-{% macro dremio_select_csv_rows(model, agate_table) %}
-{%- set column_override = model['config'].get('column_types', {}) -%}
-{%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
-{%- set cols_sql = get_seed_column_quoted_csv(model, agate_table.column_names) -%}
-  select
-    {% for col_name in agate_table.column_names -%}
-      {%- set inferred_type = adapter.convert_type(agate_table, loop.index0) -%}
-      {%- set type = column_override.get(col_name, inferred_type) -%}
-      {%- set column_name = (col_name | string) -%}
-      cast({{ adapter.quote_seed_column(column_name, quote_seed_column) }} as {{ type }})
-        as {{ adapter.quote_seed_column(column_name, quote_seed_column) }}{%- if not loop.last -%}, {%- endif -%}
-    {% endfor %}
-  from
-    (values
-      {% for row in agate_table.rows %}
-        ({%- for value in row -%}
-          {% if value is not none %}
-            {{ "'" ~ (value | string | replace("'", "''")) ~ "'" }}
-          {% else %}
-            cast(null as varchar)
-          {% endif %}
-          {%- if not loop.last%},{%- endif %}
-        {%- endfor -%})
-        {%- if not loop.last%},{%- endif %}
-      {% endfor %}) temp_table ( {{ cols_sql }} )
-{% endmacro %}
-
-{% materialization seed, adapter='dremio' %}
-  {%- set materialization_database = config.get('materialization_database', default='$scratch') %}
-  {%- set materialization_schema = config.get('materialization_schema', default='no_schema') %}
   {%- set identifier = model['alias'] -%}
-  {%- set full_refresh_mode = True -%}
+
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
-  {% set target_relation = this.incorporate(type='view') %}
-  {%- set exists_as_table = (old_relation is not none and old_relation.is_table) -%}
-    {%- set agate_table = load_agate_table() -%}
+  {%- set target_relation = api.Relation.create(identifier=identifier,
+                                                schema=schema,
+                                                database=database,
+                                                type='table') -%}
+
+  {{ run_hooks(pre_hooks) }}
+
+  -- setup: if the target relation already exists, drop it
+  -- in case if the existing and future table is delta, we want to do a
+  -- create or replace table instead of dropping, so we don't have the table unavailable
+  {% if old_relation is not none -%}
+    {{ adapter.drop_relation(old_relation) }}
+  {%- endif %}
+
+  {%- set agate_table = load_agate_table() -%}
   {%- do store_result('agate_table', response='OK', agate_table=agate_table) -%}
-  {{ run_hooks(pre_hooks, inside_transaction=False) }}
-  -- `BEGIN` happens here:
-  {{ run_hooks(pre_hooks, inside_transaction=True) }}
-  {% if exists_as_table %}
-    {{ exceptions.raise_compiler_error("Cannot create virtual dataset '{}', there is already a physical dataset named the same".format(old_relation)) }}
-  {% endif %}
-  {% set num_rows = (agate_table.rows | length) %}
-  {% set sql = dremio_select_csv_rows(model, agate_table) %}
-  {% set old_table, target_table = dremio_get_old_and_target_tables(target_relation, materialization_database, materialization_schema) %}
-  {{ drop_relation_if_exists(target_table) }}
-  {% call statement('main') %}
-    {{ create_table_as(False, target_table, sql) }}
+  {%- set num_rows = (agate_table.rows | length) -%}
+  {%- set sql = select_csv_rows(model, agate_table) -%}
+
+  -- build model
+  {% call statement('effective_main') -%}
+    {{ create_table_as(False, target_relation, sql) }}
+  {%- endcall %}
+
+  {% call statement('refresh_metadata') -%}
+    {%- if config.get('type') == 'parquet' -%}
+      {{ alter_table_refresh_metadata(target_relation) }}
+    {%- else -%}
+      {{ alter_pds(target_relation, avoid_promotion=false, lazy_update=false) }}
+    {%- endif -%}
+  {%- endcall %}
+
+  {% call noop_statement('main', 'CREATE ' ~ num_rows, 'CREATE', num_rows) %}
+    {{ sql }}
   {% endcall %}
-  {% call statement('create view') %}
-    {{ create_view_as(target_relation, 'select * from ' ~ target_table) }}
-  {% endcall %}
-  {{ drop_relation_if_exists(old_table) }}
+
   {% do persist_docs(target_relation, model) %}
-  {{ run_hooks(post_hooks, inside_transaction=True) }}
-  -- `COMMIT` happens here
-  {{ adapter.commit() }}
-  {{ run_hooks(post_hooks, inside_transaction=False) }}
-  {{ return({'relations': [target_relation]}) }}
+
+  {{ run_hooks(post_hooks) }}
+
+  {{ return({'relations': [target_relation]})}}
+
 {% endmaterialization %}

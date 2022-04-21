@@ -24,9 +24,11 @@ class DremioCredentials(Credentials):
     host: str
     UID: str
     PWD: str
-    environment: str
-    database: str
+    environment: Optional[str]
+    database: Optional[str]
     schema: Optional[str]
+    datalake: Optional[str]
+    root_path: Optional[str]
     port: Optional[int] = 31010
     additional_parameters: Optional[str] = None
 
@@ -37,6 +39,10 @@ class DremioCredentials(Credentials):
         , 'password': 'PWD'
         , 'server': 'host'
         , 'track': 'environment'
+        , 'space': 'database'
+        , 'folder': 'schema'
+        , 'materialization_database' : 'datalake'
+        , 'materialization_schema' : 'root_path'
     }
 
     @property
@@ -50,14 +56,32 @@ class DremioCredentials(Credentials):
     def _connection_keys(self):
         # return an iterator of keys to pretty-print in 'dbt debug'
         # raise NotImplementedError
-        return 'driver', 'host', 'port', 'UID', 'environment', 'database', 'schema', 'additional_parameters'
+        return 'driver', 'host', 'port', 'UID', 'database', 'schema', 'additional_parameters', 'datalake', 'root_path', 'environment'
 
-#    def __post_init__(self):
-#        if self.database is None:
-#            self.database = '@' + self.UID
-#        if self.schema is None:
-#            self.schema = DremioRelation.no_schema
+    @classmethod
+    def __pre_deserialize__(cls, data):
+        data = super().__pre_deserialize__(data)
+        if 'database' not in data:
+            data['database'] = None
+        if 'schema' not in data:
+            data['schema'] = None
+        if 'datalake' not in data:
+            data['datalake'] = None
+        if 'root_path' not in data:
+            data['root_path'] = None
+        if 'environment' not in data:
+            data['environment'] = None
+        return data
 
+    def __post_init__(self):
+        if self.database is None:
+              self.database = '@' + self.UID
+        if self.schema is None:
+              self.schema = DremioRelation.no_schema
+        if self.datalake is None:
+              self.datalake = '$scratch'
+        if self.root_path is None:
+              self.root_path = DremioRelation.no_schema
 
 class DremioConnectionManager(SQLConnectionManager):
     TYPE = 'dremio'

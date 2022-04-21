@@ -46,27 +46,3 @@ class DremioAdapter(SQLAdapter):
     @classmethod
     def convert_time_type(cls, agate_table, col_idx):
         return "time"
-
-    def list_relations(
-        self, database: Optional[str], schema: str
-    ) -> List[BaseRelation]:
-        if self._schema_is_cached(database, schema):
-            return self.cache.get_relations(database, schema)
-
-        schema_relation = self.Relation.create(
-            database=database,
-            schema=schema,
-            identifier='',
-            quote_policy=self.config.quoting
-        ).without_identifier()
-
-        # we can't build the relations cache because we don't have a
-        # manifest so we can't run any operations.
-        relations = self.list_relations_without_caching(
-            schema_relation
-        )
-
-        logger.debug('with database={}, schema={}, relations={}'
-                     .format(database, schema, relations))
-        return relations
-

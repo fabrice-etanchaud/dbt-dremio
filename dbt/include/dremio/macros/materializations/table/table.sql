@@ -1,32 +1,40 @@
-{% materialization table, adapter='dremio' %}
-  {%- set materialization_database = config.get('materialization_database', default='$scratch') %}
-  {%- set materialization_schema = config.get('materialization_schema', default='no_schema') %}
-  {% set partition = config.get('partition') %}
-  {% set sort = config.get('sort') %}
+{% materialization table, adapter = 'dremio' %}
+
   {%- set identifier = model['alias'] -%}
-  {%- set full_refresh_mode = True -%}
+  {%- set twin_strategy = config.get('twin_strategy', validator=validation.any[basestring]) or 'clone' -%}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
-  {%- set target_relation = this.incorporate(type='view') %}
-  {%- set exists_as_table = (old_relation is not none and old_relation.is_table) -%}
-    {{ run_hooks(pre_hooks, inside_transaction=False) }}
-  -- `BEGIN` happens here:
-  {{ run_hooks(pre_hooks, inside_transaction=True) }}
-  {% if exists_as_table %}
-    {{ exceptions.raise_compiler_error("Cannot create virtual dataset '{}', there is already a physical dataset named the same".format(old_relation)) }}
-  {% endif %}
-  {% set old_table, target_table = dremio_get_old_and_target_tables(target_relation, materialization_database, materialization_schema) %}
-  {{ drop_relation_if_exists(target_table) }}
-  {% call statement('main') %}
-    {{ dremio_create_table_as(target_table, sql, partition, sort) }}
-  {% endcall %}
-  {% call statement('create view') %}
-    {{ create_view_as(target_relation, 'select * from ' ~ target_table) }}
-  {% endcall %}
-  {{ drop_relation_if_exists(old_table) }}
+  {%- set target_relation = api.Relation.create(identifier=identifier,
+                                                schema=schema,
+                                                database=database,
+                                                type='table') -%}
+  {{ run_hooks(pre_hooks) }}
+
+  -- setup: if the target relation already exists, drop it
+  -- in case if the existing and future table is delta, we want to do a
+  -- create or replace table instead of dropping, so we don't have the table unavailable
+  {% if old_relation is not none -%}
+    {{ adapter.drop_relation(old_relation) }}
+  {%- endif %}
+
+  -- build model
+  {% call statement('main') -%}
+    {{ create_table_as(False, target_relation, sql) }}
+  {%- endcall %}
+
+  {% call statement('refresh_metadata') -%}
+    {%- if config.get('type') == 'parquet' -%}
+      {{ alter_table_refresh_metadata(target_relation) }}
+    {%- else -%}
+      {{ alter_pds(target_relation, avoid_promotion=false, lazy_update=false) }}
+    {%- endif -%}
+  {%- endcall %}
+
+  {{ table_twin_strategy(twin_strategy, target_relation) }}
+
   {% do persist_docs(target_relation, model) %}
-  {{ run_hooks(post_hooks, inside_transaction=True) }}
-  -- `COMMIT` happens here
-  {{ adapter.commit() }}
-  {{ run_hooks(post_hooks, inside_transaction=False) }}
-  {{ return({'relations': [target_relation]}) }}
+
+  {{ run_hooks(post_hooks) }}
+
+  {{ return({'relations': [target_relation]})}}
+
 {% endmaterialization %}

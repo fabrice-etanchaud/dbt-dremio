@@ -18,8 +18,13 @@ class DremioIncludePolicy(Policy):
 class DremioRelation(BaseRelation):
     quote_policy: DremioQuotePolicy = DremioQuotePolicy()
     include_policy: DremioIncludePolicy = DremioIncludePolicy()
-    quote_character: str = '"'
     no_schema = 'no_schema'
+    format_type: Optional[str] = None
+    format_clause: Optional[str] = None
+
+    def __post_init__(self):
+        if self.path.schema is None:
+              self.path.schema = DremioRelation.no_schema
 
     def _render_iterator(
         self
@@ -42,3 +47,9 @@ class DremioRelation(BaseRelation):
             )
         else:
             return self.quoted(identifier)
+
+    def render(self) -> str:
+        rendered = super().render()
+        if self.format_type is not None and self.format_clause is not None:
+            rendered = "".join (("TABLE( ", rendered, " ( ", self.format_clause, " ) )"))
+        return rendered

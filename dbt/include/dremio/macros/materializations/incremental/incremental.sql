@@ -45,19 +45,11 @@
     {{ build_sql }}
   {%- endcall -%}
 
-  {% do persist_docs(target_relation, model) %}
-
   {% if not(old_relation is none or full_refresh_mode) %}
     {{ adapter.drop_relation(target_tmp_relation) }}
   {% endif %}
 
-  {% call statement('refresh_metadata') -%}
-    {%- if config.get('type') == 'parquet' -%}
-      {{ alter_table_refresh_metadata(target_relation) }}
-    {%- else -%}
-      {{ alter_pds(target_relation, avoid_promotion=false, lazy_update=false) }}
-    {%- endif -%}
-  {%- endcall %}
+  {{ refresh_metadata(target_relation, raw_file_format) }}
 
   {{ table_twin_strategy(twin_strategy, target_relation) }}
 

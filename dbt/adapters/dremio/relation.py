@@ -51,5 +51,5 @@ class DremioRelation(BaseRelation):
     def render(self) -> str:
         rendered = super().render()
         if self.format_type is not None and self.format_clause is not None:
-            rendered = "".join (("TABLE( ", rendered, " ( ", self.format_clause, " ) )"))
+            rendered = "".join (("table( ", rendered, " ( ", self.format_clause, " ) )"))
         return rendered

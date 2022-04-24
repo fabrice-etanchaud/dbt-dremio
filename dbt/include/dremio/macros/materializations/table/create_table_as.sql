@@ -50,7 +50,7 @@
 {%- endmacro -%}
 
 {% macro store_as_clause() -%}
-  {%- set options = format_options() -%}
+  {%- set options = format_clause_from_config() -%}
   {%- if options is not none -%}
   store as ( {{ options }} )
   {%- endif %}

@@ -21,7 +21,7 @@
     {%- elif twin_strategy == 'clone' -%}
       {%- set sql_view -%}
         select *
-        from {{ table_relation }}
+        from {{ render_with_format_clause(table_relation) }}
       {%- endset -%}
       {% call statement('clone_view') -%}
         {{ create_view_as(view_relation, sql_view) }}

@@ -2,7 +2,6 @@
 
   {%- set identifier = model['alias'] -%}
   {%- set type = config.get('type', validator=validation.any[basestring]) or 'iceberg' -%}
-  {%- set twin_strategy = config.get('twin_strategy', validator=validation.any[basestring]) or 'clone' -%}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
   {%- set target_relation = api.Relation.create(identifier=identifier,
                                                 schema=schema,
@@ -34,7 +33,7 @@
 
   {{ refresh_metadata(target_relation, type) }}
 
-  {{ table_twin_strategy(twin_strategy, target_relation) }}
+  {{ apply_twin_strategy(target_relation) }}
 
   {% do persist_docs(target_relation, model) %}
 

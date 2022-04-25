@@ -22,7 +22,9 @@
     {{ create_view_as(target_relation, sql) }}
   {%- endcall %}
 
-  {{ view_twin_strategy(twin_strategy) }}
+  {{ apply_twin_strategy(target_relation) }}
+
+  {{ enable_default_reflection() }}
 
   {{ run_hooks(post_hooks) }}
 

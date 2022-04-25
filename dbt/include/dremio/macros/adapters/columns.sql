@@ -1,16 +1,16 @@
 {% macro dremio__get_columns_in_relation(relation) -%}
   {% call statement('get_columns_in_relation', fetch_result=True) %}
     with cols as (
-      select lower(case when position('.' in table_schema) > 0
+      select (case when position('.' in table_schema) > 0
               then substring(table_schema, 1, position('.' in table_schema) - 1)
               else table_schema
           end) as table_catalog
-          ,lower(case when position('.' in table_schema) > 0
+          ,(case when position('.' in table_schema) > 0
               then substring(table_schema, position('.' in table_schema) + 1)
               else 'no_schema'
           end) as table_schema
-          ,lower(table_name) as table_name
-          ,lower(column_name) as column_name
+          ,(table_name) as table_name
+          ,(column_name) as column_name
           ,lower(data_type) as data_type
           ,character_maximum_length
           ,numeric_precision
@@ -19,16 +19,16 @@
       from information_schema.columns
       union all
       select
-          lower(case when position('.' in table_schema) > 0
+          (case when position('.' in table_schema) > 0
                   then substring(table_schema, 1, position('.' in table_schema) - 1)
                   else table_schema
               end)
-          ,lower(case when position('.' in table_schema) > 0
+          ,(case when position('.' in table_schema) > 0
                   then substring(table_schema, position('.' in table_schema) + 1)
                   else 'no_schema'
               end)
-          ,lower(reflection_name)
-          ,lower(column_name)
+          ,(reflection_name)
+          ,(column_name)
           ,lower(data_type)
           ,character_maximum_length
           ,numeric_precision
@@ -47,9 +47,9 @@
       ,numeric_precision
       ,numeric_scale
     from cols
-    where ilike(table_catalog, '{{ relation.database.strip("\"") }}')
-      and ilike(table_schema, '{{ relation.schema.strip("\"") }}')
-      and ilike(table_name, '{{ relation.identifier.strip("\"") }}')
+    where table_catalog =  '{{ relation.database.strip("\"") }}'
+      and table_schema = '{{ relation.schema.strip("\"") }}'
+      and table_name = '{{ relation.identifier.strip("\"") }}'
     order by ordinal_position
   {% endcall %}
   {% set table = load_result('get_columns_in_relation').table %}

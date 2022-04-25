@@ -11,18 +11,18 @@
     column_type,
     column_comment,
     table_owner) as (
-  select lower(case when position('.' in columns.table_schema) > 0
+  select (case when position('.' in columns.table_schema) > 0
         then substring(columns.table_schema, 1, position('.' in columns.table_schema) - 1)
         else columns.table_schema
     end)
-    ,lower(case when position('.' in columns.table_schema) > 0
+    ,(case when position('.' in columns.table_schema) > 0
         then substring(columns.table_schema, position('.' in columns.table_schema) + 1)
         else 'no_schema'
     end)
-    ,lower(columns.table_name)
+    ,(columns.table_name)
     ,lower(t.table_type)
     ,cast(null as varchar)
-    ,lower(column_name)
+    ,(column_name)
     ,ordinal_position
     ,lower(data_type)
     ,cast(null as varchar)
@@ -33,18 +33,18 @@
               and t.table_name = columns.table_name)
   union all
   select
-    lower(case when position('.' in table_schema) > 0
+    (case when position('.' in table_schema) > 0
             then substring(table_schema, 1, position('.' in table_schema) - 1)
             else table_schema
         end)
-    ,lower(case when position('.' in table_schema) > 0
+    ,(case when position('.' in table_schema) > 0
             then substring(table_schema, position('.' in table_schema) + 1)
             else 'no_schema'
         end)
-    ,lower(reflection_name)
+    ,(reflection_name)
     ,'materializedview'
     ,initcap(type) || ' Reflection'
-    ,lower(column_name)
+    ,(column_name)
     ,ordinal_position
     ,lower(data_type)
     ,case
@@ -75,10 +75,10 @@
   select *
   from cols
   where table_type <> 'SYSTEM_TABLE'
-    and table_database = lower('{{ information_schema.database.strip("\"") }}')
+    and table_database = ('{{ information_schema.database.strip("\"") }}')
     and (
         {%- for schema in schemas -%}
-          table_schema = lower('{{ schema.strip("\"") }}'){%- if not loop.last %} or {% endif -%}
+          table_schema = ('{{ schema.strip("\"") }}'){%- if not loop.last %} or {% endif -%}
         {%- endfor -%}
       )
   order by
@@ -100,11 +100,11 @@
 {% macro dremio__list_schemas(database) -%}
   {% set sql %}
     with schemata as (
-        select lower(case when position('.' in schema_name) > 0
+        select (case when position('.' in schema_name) > 0
                 then substring(schema_name, 1, position('.' in schema_name) - 1)
                 else schema_name
             end) as catalog_name
-            ,lower(case when position('.' in schema_name) > 0
+            ,(case when position('.' in schema_name) > 0
                 then substring(schema_name, position('.' in schema_name) + 1)
                 else 'no_schema'
             end) as schema_name
@@ -112,7 +112,7 @@
     )
     select distinct schema_name
     from schemata
-    where ilike(catalog_name, '{{ database.strip("\"") }}')
+    where catalog_name = '{{ database.strip("\"") }}'
   {% endset %}
   {{ return(run_query(sql)) }}
 {% endmacro %}
@@ -120,11 +120,11 @@
 {% macro dremio__check_schema_exists(information_schema, schema) -%}
   {% set sql -%}
     with schemata as (
-        select lower(case when position('.' in schema_name) > 0
+        select (case when position('.' in schema_name) > 0
                 then substring(schema_name, 1, position('.' in schema_name) - 1)
                 else schema_name
             end) as catalog_name
-            ,lower(case when position('.' in schema_name) > 0
+            ,(case when position('.' in schema_name) > 0
                 then substring(schema_name, position('.' in schema_name) + 1)
                 else 'no_schema'
             end) as schema_name
@@ -132,8 +132,8 @@
     )
     select count(*)
     from schemata
-    where ilike(catalog_name, '{{ information_schema.database.strip("\"") }}')
-      and ilike(schema_name, '{{ schema }}')
+    where catalog_name =  '{{ information_schema.database.strip("\"") }}'
+      and schema_name = '{{ schema }}'
   {%- endset %}
   {{ return(run_query(sql)) }}
 {% endmacro %}
@@ -141,12 +141,12 @@
 {% macro dremio__list_relations_without_caching(schema_relation) %}
   {% call statement('list_relations_without_caching', fetch_result=True) -%}
     with t1(table_catalog, table_name, table_schema, table_type) as (
-    select lower(case when position('.' in table_schema) > 0
+    select (case when position('.' in table_schema) > 0
             then substring(table_schema, 1, position('.' in table_schema) - 1)
             else table_schema
         end)
-        ,lower(table_name)
-        ,lower(case when position('.' in table_schema) > 0
+        ,(table_name)
+        ,(case when position('.' in table_schema) > 0
             then substring(table_schema, position('.' in table_schema) + 1)
             else 'no_schema'
         end)
@@ -170,13 +170,13 @@
     )
     ,r2(table_catalog, table_name, table_schema, table_type) as (
     select
-        lower(replace(substr(dataset, 1, database_end_position), '"', ''))
-        ,lower(name)
+        (replace(substr(dataset, 1, database_end_position), '"', ''))
+        ,(name)
         ,case when identifier_position - database_end_position > 2
-            then lower(replace(substr(dataset, database_end_position + 2, identifier_position - database_end_position - 3), '"', ''))
+            then (replace(substr(dataset, database_end_position + 2, identifier_position - database_end_position - 3), '"', ''))
             else 'no_schema'
         end
-        -- ,lower(type) || 'reflection'
+        -- ,(type) || 'reflection'
         ,'materializedview'
 --        ,replace(substr(dataset, identifier_position), '"', '') as identifier
     from r1
@@ -191,8 +191,8 @@
 
     select *
     from u
-    where ilike(table_catalog, '{{ schema_relation.database.strip("\"") }}')
-      and ilike(table_schema, '{{ schema_relation.schema.strip("\"") }}')
+    where table_catalog = '{{ schema_relation.database.strip("\"") }}'
+      and table_schema = '{{ schema_relation.schema.strip("\"") }}'
       and table_type <> 'system_table'
   {% endcall %}
   {% set t = load_result('list_relations_without_caching').table %}

@@ -1,6 +1,9 @@
 
 {#
+input/output formats
+
 "type": String ['text', 'json', 'arrow', 'parquet', 'iceberg']
+
 for 'text' :
 "fieldDelimiter": String,
 "lineDelimiter": String,
@@ -11,8 +14,20 @@ for 'text' :
 "extractHeader": Boolean,
 "trimHeader": Boolean,
 "autoGenerateColumnNames": Boolean
+
 for 'json' :
 "prettyPrint" : Boolean
+
+input only formats
+
+"type": String ['delta', 'excel']
+
+for 'excel' :
+"xls": Boolean
+"sheetName": String,
+"extractHeader": Boolean,
+"hasMergedCells": Boolean
+
 #}
 
 {% macro format_clause_from_config() -%}
@@ -49,10 +64,10 @@ for 'json' :
   {%- set options = [] -%}
   {%- set key = 'type' -%}
   {%- set type = config[key] -%}
-  {%- if type is defined and type is string and type in ['text', 'json', 'arrow', 'parquet'] -%}
+  {%- if type is defined and type is string and type in ['text', 'json', 'arrow', 'parquet', 'avro', 'excel', 'delta'] -%}
     {%- do options.append(key ~ "=>'" ~ type ~ "'") -%}
   {%- endif -%}
-  {%- if config.type == 'text' -%}
+  {%- if type == 'text' -%}
     {%- for key in ['fieldDelimiter', 'lineDelimiter', 'quote', 'comment', 'escape'] -%}
       {%- set value = config[key] -%}
       {%- if value is defined and value is string -%}
@@ -71,6 +86,19 @@ for 'json' :
     {%- if value is defined and value is boolean -%}
       {%- do options.append(key ~ "=>" ~ value) -%}
     {%- endif -%}
+  {%- elif type == 'excel' -%}
+    {%- for key in ['sheetName'] -%}
+      {%- set value = config[key] -%}
+      {%- if value is defined and value is string -%}
+        {%- do options.append(key ~ "=>'" ~ value ~ "'") -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- for key in ['xls', 'extractHeader', 'hasMergedCells'] -%}
+      {%- set value = config[key] -%}
+      {%- if value is defined and value is boolean -%}
+        {%- do options.append(key ~ "=>" ~ value) -%}
+      {%- endif -%}
+    {%- endfor -%}
   {%- endif -%}
   {{ return((options | join(', ')) if options | length > 0 else none) }}
 {%- endmacro -%}

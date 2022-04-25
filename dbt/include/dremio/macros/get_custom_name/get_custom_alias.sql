@@ -1,6 +1,5 @@
 {% macro dremio__generate_alias_name(custom_alias_name=none, node=none) -%}
-  {%- set custom_alias_name = custom_alias_name
-    if node.config.materialized in ['view', 'raw_reflection', 'aggregation_reflection']
+  {%- set custom_alias_name = custom_alias_name if not is_datalake_node(node)
     else node.config.file -%}
   {{ generate_alias_name_impl(node.name, custom_alias_name, node) }}
 {%- endmacro %}

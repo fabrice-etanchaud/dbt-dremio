@@ -15,7 +15,7 @@
                                                 type='table') -%}
 
   {%- set raw_strategy = config.get('incremental_strategy', validator=validation.any[basestring]) or 'append' -%}
-  {%- set raw_file_format = config.get('type', validator=validation.any[basestring]) or 'iceberg' -%}
+  {%- set raw_file_format = config.get('format', validator=validation.any[basestring]) or 'iceberg' -%}
   {%- set file_format = dbt_dremio_validate_get_file_format(raw_file_format) -%}
   {%- set strategy = dbt_dremio_validate_get_incremental_strategy(raw_strategy, file_format) -%}
   {%- set unique_key = config.get('unique_key', validator=validation.any[list, basestring]) -%}
@@ -26,10 +26,10 @@
 
   {{ run_hooks(pre_hooks) }}
 
-  {% if old_relation is none or full_refresh_mode %}
-    {% if full_refresh_mode %}
-      {{ adapter.drop_relation(old_relation) }}
-    {% endif %}
+  {% if old_relation is none %}
+    {% set build_sql = create_table_as(False, target_relation, sql) %}
+  {% elif full_refresh_mode %}
+    {% do adapter.drop_relation(old_relation) %}
     {% set build_sql = create_table_as(False, target_relation, sql) %}
   {% else %}
     {% if tmp_relation is not none %}

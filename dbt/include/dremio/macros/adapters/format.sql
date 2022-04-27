@@ -31,26 +31,36 @@ for 'excel' :
 #}
 
 {% macro format_clause_from_config() -%}
+  {%- set key_map = {'format':'type'
+    ,'field_delimiter':'fieldDelimiter'
+    ,'line_delimiter':'lineDelimiter'
+    ,'skip_first_line':'skipFirstLine'
+    ,'extract_header':'extractHeader'
+    ,'trim_header':'trimHeader'
+    ,'auto_generated_column_names':'autoGenerateColumnNames'
+    ,'pretty_print':'prettyPrint'} -%}
   {%- set options = [] -%}
-  {%- set key = 'type' -%}
-  {%- set type = config.get(key, validator=validation.any[basestring]) or 'iceberg' -%}
-  {%- if type in ['text', 'json', 'arrow', 'parquet'] -%}
-    {%- do options.append(key ~ "=>'" ~ type ~ "'") -%}
-    {%- if type == 'text' -%}
-      {%- for key in ['fieldDelimiter', 'lineDelimiter', 'quote', 'comment', 'escape'] -%}
+  {%- set format = config.get('format', validator=validation.any[basestring]) or 'iceberg' -%}
+  {%- if format in ['text', 'json', 'arrow', 'parquet'] -%}
+    {%- do options.append("type=>'" ~ format ~ "'") -%}
+    {%- if format == 'text' -%}
+      {%- for key in ['field_delimiter', 'line_delimiter', 'quote', 'comment', 'escape'] -%}
+        {%- set key = key_map[key] or key -%}
         {%- set value = config.get(key, validator=validation.any[basestring]) -%}
         {%- if value is not none -%}
           {%- do options.append(key ~ "=>'" ~ value ~ "'") -%}
         {%- endif -%}
       {%- endfor -%}
-      {%- for key in ['skipFirstLine', 'extractHeader', 'trimHeader', 'autoGenerateColumnNames'] -%}
+      {%- for key in ['skip_first_line', 'extract_header', 'trim_header', 'auto_generated_column_names'] -%}
+        {%- set key = key_map[key] or key -%}
         {%- set value = config.get(key, validator=validation.any[boolean]) -%}
         {%- if value is not none -%}
           {%- do options.append(key ~ "=>" ~ value) -%}
         {%- endif -%}
       {%- endfor -%}
-    {%- elif type == 'json' -%}
-      {%- set key = 'prettyPrint' -%}
+    {%- elif format == 'json' -%}
+      {%- set key = 'pretty_print' -%}
+      {%- set key = key_map[key] or key -%}
       {%- set value = config.get(key, validator=validation.any[boolean]) -%}
       {%- if value is not none -%}
         {%- do options.append(key ~ "=>" ~ value) -%}
@@ -61,41 +71,55 @@ for 'excel' :
 {%- endmacro -%}
 
 {%- macro format_clause_from_node(config) -%}
+{%- set key_map = {'format':'type'
+  ,'field_delimiter':'fieldDelimiter'
+  ,'line_delimiter':'lineDelimiter'
+  ,'skip_first_line':'skipFirstLine'
+  ,'extract_header':'extractHeader'
+  ,'trim_header':'trimHeader'
+  ,'auto_generated_column_names':'autoGenerateColumnNames'
+  ,'pretty_print':'prettyPrint'
+  ,'sheet_name':'sheetName'
+  ,'has_merged_cells':'hasMergedCells'} -%}
   {%- set options = [] -%}
-  {%- set key = 'type' -%}
-  {%- set type = config[key] -%}
-  {%- if type is defined and type is string and type in ['text', 'json', 'arrow', 'parquet', 'avro', 'excel', 'delta'] -%}
-    {%- do options.append(key ~ "=>'" ~ type ~ "'") -%}
+  {%- set format = config['format'] -%}
+  {%- if format is defined and format is string and format in ['text', 'json', 'arrow', 'parquet', 'avro', 'excel', 'delta'] -%}
+    {%- do options.append("type=>'" ~ format ~ "'") -%}
   {%- endif -%}
-  {%- if type == 'text' -%}
-    {%- for key in ['fieldDelimiter', 'lineDelimiter', 'quote', 'comment', 'escape'] -%}
+  {%- if format == 'text' -%}
+    {%- for key in ['field_delimiter', 'line_delimiter', 'quote', 'comment', 'escape'] -%}
       {%- set value = config[key] -%}
       {%- if value is defined and value is string -%}
+        {%- set key = key_map[key] or key -%}
         {%- do options.append(key ~ "=>'" ~ value ~ "'") -%}
       {%- endif -%}
     {%- endfor -%}
-    {%- for key in ['skipFirstLine', 'extractHeader', 'trimHeader', 'autoGenerateColumnNames'] -%}
+    {%- for key in ['skip_first_line', 'extract_header', 'trim_header', 'auto_generated_column_names'] -%}
       {%- set value = config[key] -%}
       {%- if value is defined and value is boolean -%}
+        {%- set key = key_map[key] or key -%}
         {%- do options.append(key ~ "=>" ~ value) -%}
       {%- endif -%}
     {%- endfor -%}
-  {%- elif type == 'json' -%}
-    {%- set key = 'prettyPrint' -%}
+  {%- elif format == 'json' -%}
+    {%- set key = 'pretty_print' -%}
     {%- set value = config[key] -%}
     {%- if value is defined and value is boolean -%}
+      {%- set key = key_map[key] or key -%}
       {%- do options.append(key ~ "=>" ~ value) -%}
     {%- endif -%}
-  {%- elif type == 'excel' -%}
-    {%- for key in ['sheetName'] -%}
+  {%- elif format == 'excel' -%}
+    {%- for key in ['sheet_name'] -%}
       {%- set value = config[key] -%}
       {%- if value is defined and value is string -%}
+        {%- set key = key_map[key] or key -%}
         {%- do options.append(key ~ "=>'" ~ value ~ "'") -%}
       {%- endif -%}
     {%- endfor -%}
-    {%- for key in ['xls', 'extractHeader', 'hasMergedCells'] -%}
+    {%- for key in ['xls', 'extract_header', 'has_merged_cells'] -%}
       {%- set value = config[key] -%}
       {%- if value is defined and value is boolean -%}
+        {%- set key = key_map[key] or key -%}
         {%- do options.append(key ~ "=>" ~ value) -%}
       {%- endif -%}
     {%- endfor -%}

@@ -9,10 +9,10 @@ ALTER PDS <PHYSICAL-DATASET-PATH> FORGET METADATA
 ALTER TABLE <TABLE> REFRESH METADATA
 #}
 
-{% macro refresh_metadata(relation, type='iceberg') -%}
-  {%- if type != 'iceberg' -%}
+{% macro refresh_metadata(relation, format='iceberg') -%}
+  {%- if format != 'iceberg' -%}
     {% call statement('refresh_metadata') -%}
-      {%- if type == 'parquet' -%}
+      {%- if format == 'parquet' -%}
         {{ alter_table_refresh_metadata(relation) }}
       {%- else -%}
         {{ alter_pds(relation, avoid_promotion=false, lazy_update=false) }}

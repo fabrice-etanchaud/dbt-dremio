@@ -1,7 +1,7 @@
 {% materialization seed, adapter = 'dremio' %}
 
   {%- set identifier = model['alias'] -%}
-  {%- set type = config.get('type', validator=validation.any[basestring]) or 'iceberg' -%}
+  {%- set format = config.get('format', validator=validation.any[basestring]) or 'iceberg' -%}
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
   {%- set target_relation = api.Relation.create(identifier=identifier,
                                                 schema=schema,
@@ -31,7 +31,7 @@
     {{ sql }}
   {% endcall %}
 
-  {{ refresh_metadata(target_relation, type) }}
+  {{ refresh_metadata(target_relation, format) }}
 
   {{ apply_twin_strategy(target_relation) }}
 

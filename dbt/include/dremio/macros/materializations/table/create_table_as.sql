@@ -27,28 +27,6 @@
   )
 {%- endmacro -%}
 
-{% macro config_cols(label) %}
-  {%- set cols = config.get(label | replace(" ", "_"), validator=validation.any[list, basestring]) -%}
-  {%- if cols is not none %}
-    {%- if cols is string -%}
-      {%- set cols = [cols] -%}
-    {%- endif -%}
-    {{ label }} (
-    {%- for item in cols -%}
-      {{ item }}
-      {%- if not loop.last -%},{%- endif -%}
-    {%- endfor -%}
-    )
-  {%- endif %}
-{%- endmacro -%}
-
-{% macro partition_method() %}
-  {%- set method = config.get('partition_method', validator=validation.any[basestring]) -%}
-  {%- if method is not none -%}
-   {{ method }}
-  {%- endif %}
-{%- endmacro -%}
-
 {% macro store_as_clause() -%}
   {%- set options = format_clause_from_config() -%}
   {%- if options is not none -%}

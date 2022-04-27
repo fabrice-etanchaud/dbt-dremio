@@ -19,7 +19,7 @@ class DremioRelation(BaseRelation):
     quote_policy: DremioQuotePolicy = DremioQuotePolicy()
     include_policy: DremioIncludePolicy = DremioIncludePolicy()
     no_schema = 'no_schema'
-    format_type: Optional[str] = None
+    format: Optional[str] = None
     format_clause: Optional[str] = None
 
     def __post_init__(self):
@@ -50,6 +50,6 @@ class DremioRelation(BaseRelation):
 
     def render(self) -> str:
         rendered = super().render()
-        if self.format_type is not None and self.format_clause is not None:
+        if self.format is not None and self.format_clause is not None:
             rendered = "".join (("table( ", rendered, " ( ", self.format_clause, " ) )"))
         return rendered

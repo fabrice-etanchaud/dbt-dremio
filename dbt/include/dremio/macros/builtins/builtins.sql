@@ -2,12 +2,15 @@
   {%- set relation = builtins.ref(model_name) -%}
   {%- if execute -%}
     {%- set model = graph.nodes.values() | selectattr("name", "equalto", model_name) | list | first -%}
-    {%- set format_type = model.config.type if
-      model.config.materialized not in ['view', 'raw_reflection', 'aggregation_reflection']
-      and model.config.type is defined
+    {%- if model.config.materialized == 'reflection' -%}
+      {% do exceptions.raise_compiler_error("Reflections cannot be ref()erenced (" ~ relation ~ ")") %}
+    {%- endif -%}
+    {%- set format = model.config.format if
+      model.config.materialized not in ['view', 'reflection']
+      and model.config.format is defined
       else none -%}
-    {%- set format_clause = format_clause_from_node(model.config) if format_type is not none else none -%}
-    {%- set relation2 = api.Relation.create(database=relation.database, schema=relation.schema, identifier=relation.identifier, format_type=format_type, format_clause=format_clause) -%}
+    {%- set format_clause = format_clause_from_node(model.config) if format is not none else none -%}
+    {%- set relation2 = api.Relation.create(database=relation.database, schema=relation.schema, identifier=relation.identifier, format=format, format_clause=format_clause) -%}
     {{ return (relation2) }}
   {%- else -%}
     {{ return (relation) }}
@@ -18,12 +21,12 @@
   {%- set relation = builtins.source(source_name, table_name) -%}
   {%- if execute -%}
     {%- set source = graph.sources.values() | selectattr("source_name", "equalto", source_name) | selectattr("name", "equalto", table_name) | list | first -%}
-    {%- set format_type = source.external.type if
+    {%- set format = source.external.format if
       source.external is defined
-      and source.external.type is defined
+      and source.external.format is defined
       else none -%}
-    {%- set format_clause = format_clause_from_node(source.external) if format_type is not none else none -%}
-    {%- set relation2 = api.Relation.create(database=relation.database, schema=relation.schema, identifier=relation.identifier, format_type=format_type, format_clause=format_clause) -%}
+    {%- set format_clause = format_clause_from_node(source.external) if format is not none else none -%}
+    {%- set relation2 = api.Relation.create(database=relation.database, schema=relation.schema, identifier=relation.identifier, format=format, format_clause=format_clause) -%}
     {{ return (relation2) }}
   {%- else -%}
     {{ return (relation) }}

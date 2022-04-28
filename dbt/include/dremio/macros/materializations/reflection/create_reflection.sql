@@ -80,7 +80,7 @@ USING target
 
 {%- macro measures_clause(measures=none) %}
   {%- set cols = config.get('measures', validator=validation.any[list, basestring]) or measures -%}
-  {%- set comp_cols = config.get('computations', validator=validation.any[list, basestring]) -%}
+  {%- set comp_cols = config.get('computations', validator=validation.any[list, basestring]) or [] -%}
   {%- if cols is not none %}
     {%- if cols is string -%}
       {%- set cols = [cols] -%}

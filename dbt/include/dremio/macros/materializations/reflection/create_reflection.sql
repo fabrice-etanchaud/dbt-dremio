@@ -102,6 +102,6 @@ USING target
 {%- macro arrow_cache_clause() -%}
   {%- set arrow_cache = config.get('arrow_cache', validator=validation.any[boolean]) -%}
   {%- if arrow_cache is not none and arrow_cache -%}
-    arrow_cache
+    arrow cache
   {%- endif -%}
 {% endmacro -%}

@@ -1,59 +1,24 @@
 {% macro dremio__get_columns_in_relation(relation) -%}
+
+  {%- set database = relation.database.strip('"') -%}
+  {%- set schema = relation.schema.strip('"') -%}
+  {%- set identifier = relation.identifier.strip('"') -%}
+  {%- set schema_name = database
+        + (('.' + schema) if schema != 'no_schema' else '') -%}
   {% call statement('get_columns_in_relation', fetch_result=True) %}
-    with cols as (
-      select (case when position('.' in table_schema) > 0
-              then substring(table_schema, 1, position('.' in table_schema) - 1)
-              else table_schema
-          end) as table_catalog
-          ,(case when position('.' in table_schema) > 0
-              then substring(table_schema, position('.' in table_schema) + 1)
-              else 'no_schema'
-          end) as table_schema
-          ,(table_name) as table_name
-          ,(column_name) as column_name
-          ,lower(data_type) as data_type
-          ,character_maximum_length
-          ,numeric_precision
-          ,numeric_scale
-          ,ordinal_position
-      from information_schema.columns
-      union all
-      select
-          (case when position('.' in table_schema) > 0
-                  then substring(table_schema, 1, position('.' in table_schema) - 1)
-                  else table_schema
-              end)
-          ,(case when position('.' in table_schema) > 0
-                  then substring(table_schema, position('.' in table_schema) + 1)
-                  else 'no_schema'
-              end)
-          ,(reflection_name)
-          ,(column_name)
-          ,lower(data_type)
-          ,character_maximum_length
-          ,numeric_precision
-          ,numeric_scale
-          ,ordinal_position
-      from sys.reflections
-      join information_schema.columns
-          on (columns.table_schema || '.' || columns.table_name = replace(dataset_name, '"', '')
-              and (strpos(',' || replace(display_columns, ' ', '') || ',', ',' || column_name || ',') > 0
-                  or strpos(',' || replace(dimensions, ' ', '') || ',', ',' || column_name || ',') > 0
-                  or strpos(',' || replace(measures, ' ', '') || ',', ',' || column_name || ',') > 0))
-    )
-    select column_name
-      ,data_type
-      ,character_maximum_length
-      ,numeric_precision
-      ,numeric_scale
-    from cols
-    where table_catalog =  '{{ relation.database.strip("\"") }}'
-      and table_schema = '{{ relation.schema.strip("\"") }}'
-      and table_name = '{{ relation.identifier.strip("\"") }}'
+    select column_name as column_name
+        ,lower(data_type) as data_type
+        ,character_maximum_length
+        ,numeric_precision
+        ,numeric_scale
+    from information_schema.columns
+    where table_schema = '{{ schema_name }}'
+    and table_name = '{{ identifier }}'
     order by ordinal_position
   {% endcall %}
   {% set table = load_result('get_columns_in_relation').table %}
   {{ return(sql_convert_columns_in_relation(table)) }}
+
 {% endmacro %}
 
 {% macro dremio__alter_column_type(relation, column_name, new_column_type) -%}

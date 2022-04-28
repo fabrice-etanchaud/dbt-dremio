@@ -1,4 +1,4 @@
-![dbt-dremio](https://www.dremio.com/img/blog/gnarly-wave-data-lake.png)
+﻿![dbt-dremio](https://www.dremio.com/img/blog/gnarly-wave-data-lake.png)
 
 > *This project is developed during my spare time, along side my lead dev position at [MAIF-VIE](http://www.maif.fr), and aims to provide a competitive alternative solution for our current ETL stack.*
 
@@ -9,11 +9,13 @@ If you are reading this documentation, I assume you already know well both dbt a
 
 # Installation
 dbt dependencies :
- - dbt-core=1.0.4,
+ - dbt-core>=1.0.6,
  - pyodbc>=4.0.27
 
 dremio dependency :
  - latest dremio's odbc driver
+ - dremio >= 21.0.0
+ - `dremio.iceberg.enabled`, `dremio.iceberg.ctas.enabled` and `dremio.execution.support_unlimited_splits` enabled
 
 os dependency :
 - odbc (unixodbc-dev on linux)
@@ -21,15 +23,16 @@ os dependency :
 `pip install dbt-dremio`
 
 # Relation types
-In dbt's world, A dremio dataset can be either a `view` or a `table`. A dremio reflection - a dataset materialization with a refresh policy - will be mapped to a dbt `materializedview`.
+In dbt's world, A dremio relation can be either a `view` or a `table`. A dremio reflection - a dataset materialization with a refresh policy - will be mapped to a dbt `materializedview` relation.
 
 # Databases
 As Dremio is a federation tool, dbt's queries can span locations and so, in dremio's adapter, databases are first class citizens.
-There are two kinds of dataset locations : sources and spaces. Sources are mostly input locations, and spaces output ones, with exceptions :
+There are three kinds of dataset locations : external sources, datalakes and spaces. Sources are mostly input locations, datalakes are both input and output locations and spaces can only contains views, with exceptions :
 
 location|can create table| can drop table |can create/drop view
 -|-|-|-
-source|if CTAS (`CREATE TABLE AS`) is allowed on this source|if `DROP TABLE` is allowed on this source|no
+external source|no|no|no
+datalake|if CTAS (`CREATE TABLE AS`) is allowed on this source|if `DROP TABLE` is allowed on this source|no
 space|only in the user's home space, and by manually uploading files in the UI|only in the UI|yes
 distributed shared storage (`$scratch` source)|yes|yes|no
 
@@ -43,7 +46,7 @@ In dremio, schemas are recursive, like filesystem folders : `dbt.internal."my ve
     +database: track17
     +schema: no_schema
 
-**Please note that because dremio has no `CREATE SCHEMA` command yet, all schemas must be created before in the UI or via the API (and by the way dremio is loved by all oracle dbas)**
+**Please note that because dremio has no `CREATE SCHEMA` command yet, all schemas must be created before in the UI or via the API.**
 
 # Rendering of a relation
 
@@ -67,36 +70,25 @@ That way you can configure seperately input sources and output target `database`
 
 ## Dremio's SQL specificities
 
-Given that :
-
-- tables and views cannot coexist in the same schema
-- there are no transactions yet (at DDL level, but [Nessie](https://projectnessie.org/) is on its way),
-- there is no `ALTER TABLE|VIEW RENAME TO`command
-- you can `CREATE OR REPLACE` a view, but only `CREATE` a table,
-- data can only be added in tables with a CTAS,
-
-I tried to keep things secure setting up a kind of logical interface between the dbt model and its implementation in dremio. So :
-
- - almost all materializations create a view as interface, so they could coexist in a same space,
- - each new version of the model's underlying data is first stored in a new table, and then referenced atomically (via a `CREATE OR REPLACE VIEW`) by the interface view. The table containing the old version of the underlying data can then be dropped : a kind of pedantic blue/green deployement at model's level.
- - the coexistence of old and new data versions helps overcoming the lack of SQL-DML commands, see for example the `incremental` implementation.
-
-> This could change in near future, as Dremio's CEO Tomer Shiran posted in discourse that [Apache Iceberg](https://iceberg.apache.org/) should be soon included, bringing INSERT [OVERWRITE] to dremio, challenging a well known cloud datawarehouse in the same temperatures...
+Tables and views cannot coexist in a same database/datalake. So the usual dbt database+schema configuration stands only for views. Seeds, tables, incrementals will use a parallel datalake+schema configuration. This configuration was also added in the profiles.
 
 ## Seed
 
 adapter's specific configuration|type|required|default
 -|-|-|-
-materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
-materialization_schema||no|model's rendering `database[.schema]`, without the identifier part (we don't want the environments to share the same underlying table)
+datalake|CTAS/DROP TABLE allowed source's name|no|`$scratch`
+root_path|the relative path in the datalake|no|`no_schema`
 
     CREATE TABLE AS
     SELECT *
     FROM VALUES()[,()]
 
-As dremio does not support query's bindings, the python value is converted as string, quoted and casted in the sql type.
+As dremio does not support query bindings, the python value is converted as string, quoted and casted in the column sql type.
 ## View
-
+adapter's specific configuration|type|required|default
+-|-|-|-
+database|any space (or home space) root|no|`@user`
+schema|relative path in this space|no|`no_schema`
     CREATE OR REPLACE VIEW AS
     {{ sql }}
 
@@ -104,105 +96,139 @@ As dremio does not support query's bindings, the python value is converted as st
 
 adapter's specific configuration|type|required|default
 -|-|-|-
-materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
-materialization_schema||no|model's rendering `database[.schema]`, without the identifier part 
-partition| the list of partitioning columns|no|
-sort| the list of sorting columns|no|
+datalake|CTAS/DROP TABLE allowed source's name|no|`$scratch`
+root_path||no|`no_schema`
 
-    CREATE TABLE [HASH PARTITION BY] [LOCALSORT BY] AS
-    {{ sq }}
 
+	 CREATE TABLE tblname [ (field1, field2, ...) ]
+	 [ (STRIPED, HASH, ROUNDROBIN) PARTITION BY (field1, field2, ..) ]
+     [ DISTRIBUTE BY (field1, field2, ..) ]
+     [ LOCALSORT BY (field1, field2, ..) ]
+     [ STORE AS (opt1 => val1, opt2 => val3, ...) ]
+     [ WITH SINGLE WRITER ]
+     [ AS select_statement ]
+     
 ## Incremental
+### the `append`strategy is available in dbt when `dremio.iceberg.ctas.enabled=yes` in dremio.
 
 adapter's specific configuration|type|required|default
 -|-|-|-
-materialization_database|CTAS/DROP TABLE allowed source's name|no|`$scratch`
-materialization_schema||no|model's rendering `database[.schema]`, without the identifier part 
-partition| the list of partitioning columns|no|
-sort| the list of sorting columns|no|
+datalake|CTAS/DROP TABLE allowed source's name|no|`$scratch`
+root_path||no|`no_schema`
+incremental_strategy| only `append` for the moment|no|`append`
+on_schema_change| `sync_all_columns`, `append_new_columns`, `fail`, `ignore`|no|`ignore`
 
-As we still have the old data when new data is created, the new table is filled with :
+Other strategies will be implemented when dremio can `INSERT OVERWRITE` or `MERGE/UPDATE` in an iceberg table.
 
-    {% if full_refresh_mode or old_relation is none %}
-	    {% set build_sql = sql %}
-    {% else %}
-	    {% set build_sql %}
-		    with increment as (
-			    {{ sql }}
-		    )
-		    select *
-		    from increment
-		    union all
-		    select *
-		    from {{ old_table }}
-		    {%- if unique_key is not none %}
-			where {{ unique_key }} not in (
-			    select {{ unique_key }}
-			    from increment
-			    )
-		    {% endif %}
-		{% endset %}
-    {% endif %}
+## Reflection
+A reflection is a dataset materialization, with a refresh policy, handled internally by dremio.
 
-## Raw Reflection
-A raw reflection is a dataset materialization, with a refresh policy, handled internally by dremio.
+The `dremio:reflections_enabled` boolean dbt variable can be used to disable reflection management in dbt. 
+That way, you can still use dbt ontop dremio enterprise edition, even without admin rights needed to read `sys.reflections` table.
 
-adapter's specific configuration|type|required|default
--|-|-|-
-dataset|the related model's name|yes|
-display| the list of columns|no|all columns
-partition| the list of partitioning columns|no|
-sort| the list of sorting columns|no|
-distribute| the list of distributing columns|no|
+adapter's specific configuration|reflection type|type|required|default
+-|-|-|-|-
+anchor|all but external|the anchor model name|only if there is more than one `-- depends_on` clause in the model SQL|
+reflection_type|all|`raw`, `aggregate` or `external`|no|`raw`
+external_target|external| the underlying target|yes|
+display|raw|list of columns|no|all columns
+dimensions|aggregate|list of dimension columns|no|all non decimal/float/double columns
+dimensions_by_day|aggregate|list of dimension timestamp columns we want to keep only the date part of|no|all timestamp columns
+measures|aggregate|list of measure columns|no|all decimal/float/double columns
+computations|aggregate|list of specific [computations](https://docs.dremio.com/software/sql-reference/sql-commands/acceleration/#aggregate-reflections)|no|`SUM, COUNT` for each measure (in array)
+arrow_cache|all but external|is the reflection using arrow caching ?|no|`false`
+	ALTER TABLE tblname
+	ADD RAW REFLECTION name
+	USING
+	DISPLAY (field1, field2)
+	[ DISTRIBUTE BY (field1, field2, ..) ]
+	[ (STRIPED, CONSOLIDATED) PARTITION BY (field1, field2, ..) ]
+	[ LOCALSORT BY (field1, field2, ..) ]
+	[ ARROW CACHE ]
 
-A raw reflection is defined in a .sql model file like this : 
+	ALTER TABLE tblname
+	ADD AGGREGATE REFLECTION name
+	USING
+	DIMENSIONS (field1, field2)
+	MEASURES (field1, field2)
+	[ DISTRIBUTE BY (field1, field2, ..) ]
+	[ (STRIPED, CONSOLIDATED) PARTITION BY (field1, field2, ..) ]
+	[ LOCALSORT BY (field1, field2, ..) ]
+	[ ARROW CACHE ]
 
-	 -- depends_on: {{ ref('my_vds') }}
-	{{ config(
-		materialized='raw_reflection'
-		,dataset='my_vds'
-		)
-	}}
+	ALTER TABLE tblname
+	ADD EXTERNAL REFLECTION name
+	USING target
 
+The reflection's anchor is defined in the .sql model file like this : 
 
-## Aggregate Reflection
+	 -- depends_on: {{ ref('my_anchor') }}
 
-An aggregate reflection is a dataset materialization, containing pre aggregated measures on dimensions, with a refresh policy, handled internally by dremio.
+## Format configuration
+Model format is specified in its `config` block; source table format in its `external` properties block.
 
-adapter's specific configuration|type|required|default
--|-|-|-
-dataset|the related model's name|yes|
-dimensions| the list of dimension columns|no|all columns whom type is not in 'float', 'double' and 'decimal'
-measures| the list of measurement columns|no|all columns whom type is in 'float', 'double' and 'decimal'
-partition| the list of partitioning columns|no|
-sort| the list of sorting columns|no|
-distribute| the list of distributing columns|no|
+Seed, table and incremental materializations share the same format configuration :
 
-Aggregate reflections are declared just like raw reflections : 
+in `config` or `external`blocks|format|type|required|default
+-|-|-|-|-
+format||`text`, `json`, `arrow`, `parquet`, `iceberg`|no|`iceberg`
+field_delimiter|text|field delimiter character|no|
+line_delimiter|text|line delimiter character|no|
+quote|text|quote character|no|
+comment|text|comment character|no|
+escape|text|escape character|no|
+skip_first_line|text|do not read first line ?|no|
+extract_header|text|extract header ?|no|
+trim_header|text|trim header column names ?|no|
+auto_generated_column_names|text|auto generate column names ?|no|
+pretty_print|json|write human readable json ?|no
 
-	 -- depends_on: {{ ref('my_vds') }}
-	{{ config(
-		materialized='aggregation_reflection'
-		,dataset='my_vds'
-		)
-	}}
+It's all the same for sources, with a few extra configurations : 
+in `external`block |format|type|required|default
+-|-|-|-|-
+format||`excel`, `delta` (deltalake)|no|
+extract_header|text, excel|extract header from first line ?|no|
+sheet_name|excel|sheet's name in the excel file|no|
+xls|excel|is it an old excel file, not a xlsx one ?|no|
+has_merged_cells|excel|are there any merged cells ?|no|
 
+## Partitioning configuration
 
-## File
+Any materialization except `view` can be partitioned. Dremio will add as many `dir0, dir1...` columns as needed to let the partitioning scheme show up in the source table, or model.
 
-This materialization creates a table without a view interface. It's an easy way to automate the export of a dataset (in parquet format).
+`config`|materialization|type|required|default
+-|-|-|-|-
+partition_method|all but reflection|`striped`, `hash`, `roundrobin`|no|
+partition_method|reflection|`striped`, `consolidated`|no|
+partition_by|all |partition columns|no|
+localsort_by|all |sort columns inside partition|no|
+distribute_by|all |distribution columns|no|
+single_writer|all but reflection|disable parallel write, incompatible with partition_by|no|
+
+## Twin strategy configuration
+
+As tables and views cannot coexist neither in spaces or datalakes, when a model changes materialization, from view to table for example, we can end up with both a view in a space, and a table in a datalake. 
+
+dbt can apply a 'twin' strategy :
+ - **allow** sql object homonyms of different types (relaxed behavior) : if a model changes materialization from table to view, the previous table still remains in the datalake layer.
+ - **prevent** sql object homonym creation, dropping the previous model materialization if it exists : the previous table is dropped in the datalake layer.
+ - **clone** the tabled based materialization as a view, in order to have a direct access to the model from the space layer : the previous table is also dropped in the datalake layer. But if a model changes materialization from view to table, that time the view definition is replaced with a straight `select * from {{ the_new_table }}`.
+
+`config`|materialization|type|required|default
+-|-|-|-|-
+twin_strategy|every materialization but reflection|`allow`, `prevent`, `clone`|no|`clone`
 
 # Connection
 Be careful to provide the right odbc driver's name in the adapter specific `driver` attribute, the one you gave to your dremio's odbc driver installation.
 
-## Managed or unmanaged target
-Thanks to [Ronald Damhof's article](https://prudenza.typepad.com/files/english---the-data-quadrant-model-interview-ronald-damhof.pdf), I wanted to have a clear separation between managed environments (prod, preprod...) and unmanaged ones (developers' environments). So there are two distinct targets : managed and unmanaged.
+Here are the profile default values :
 
-In an unmanaged environment, if no target database is provided, all models are materialized in the user's home space, under the target schema.
-
-In a managed environment, target and custom databases and schemas are used as usual. If no target database is provided,  `target.environment` will be used as the default value.
-
-You will find in [the macros' directory](https://github.com/fabrice-etanchaud/dbt-dremio/tree/master/dbt/include/dremio/macros) an environment aware implementation for custom database and schema names.
+configuration | default
+-|-
+database|@user
+schema|no_schema
+datalake|$scratch
+root_path|no_schema
 
 
     track17:
@@ -213,8 +239,6 @@ You will find in [the macros' directory](https://github.com/fabrice-etanchaud/db
           driver: Dremio ODBC Driver 64-bit
           host: veniseverte.fr
           port: 31010
-          environment: track17
-          schema: dbt
           user: fabrice_etanchaud
           password: fabricesecretpassword
         managed:
@@ -226,6 +250,8 @@ You will find in [the macros' directory](https://github.com/fabrice-etanchaud/db
           environment: track17
           database: '@dremio'
           schema: no_schema
+          datalake: my_s3
+          root_path: part.comp.biz
           user: dremio
           password: dremiosecretpassword
       target: unmanaged

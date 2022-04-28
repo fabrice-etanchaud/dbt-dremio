@@ -1,4 +1,4 @@
-﻿![dbt-dremio](https://www.dremio.com/img/blog/gnarly-wave-data-lake.png)
+﻿![dbt-dremio](https://repository-images.githubusercontent.com/170744145/f02b638a-06ce-49dd-91f3-9627ae53c1c1)
 
 > *This project is developed during my spare time, along side my lead dev position at [MAIF-VIE](http://www.maif.fr), and aims to provide a competitive alternative solution for our current ETL stack.*
 

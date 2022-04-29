@@ -1,4 +1,4 @@
-﻿![dbt-dremio](https://repository-images.githubusercontent.com/170744145/f02b638a-06ce-49dd-91f3-9627ae53c1c1)
+﻿![dbt-dremio](https://www.dremio.com/img/blog/gnarly-wave-data-lake.png)
 
 > *This project is developed during my spare time, along side my lead dev position at [MAIF-VIE](http://www.maif.fr), and aims to provide a competitive alternative solution for our current ETL stack.*
 
@@ -26,15 +26,15 @@ os dependency :
 In dbt's world, A dremio relation can be either a `view` or a `table`. A dremio reflection - a dataset materialization with a refresh policy - will be mapped to a dbt `materializedview` relation.
 
 # Databases
-As Dremio is a federation tool, dbt's queries can span locations and so, in dremio's adapter, databases are paramount.
+As Dremio is a federation tool, dbt's queries can span locations and so, in dremio's adapter, databases are first class citizens.
 There are three kinds of dataset locations : external sources, datalakes and spaces. Sources are mostly input locations, datalakes are both input and output locations and spaces can only contains views, with exceptions :
 
-location|can create table| can drop table |can create/drop view|dbt relation types|dbt materializations/nodes
--|-|-|-|-|-
-external source|no|no|no|table|sources
-datalake|if CTAS (`CREATE TABLE AS`) is allowed on this source|if `DROP TABLE` is allowed on this source|no|table|sources, seed, table, incremental
-space|only in the user's home space, and by manually uploading files in the UI|only in the UI|yes|view, table|view, unmanaged sources
-distributed shared storage (`$scratch` source)|yes|yes|no|table, materializedview|seed, table, incremental, reflection
+location|can create table| can drop table |can create/drop view
+-|-|-|-
+external source|no|no|no
+datalake|if CTAS (`CREATE TABLE AS`) is allowed on this source|if `DROP TABLE` is allowed on this source|no
+space|only in the user's home space, and by manually uploading files in the UI|only in the UI|yes
+distributed shared storage (`$scratch` source)|yes|yes|no
 
 As you can see, using the SQL-DDL interface, the location type implies the relation type, so materialization implementations do not have to take care of possible relation type mutations.
 
@@ -70,7 +70,7 @@ That way you can configure seperately input sources and output target `database`
 
 ## Dremio's SQL specificities
 
-Tables and views cannot coexist in a same database/datalake. So the usual dbt database+schema configuration stands only for views. Seeds, tables, incrementals will use a parallel datalake+root_path configuration. This configuration was also added in the profiles.
+Tables and views cannot coexist in a same database/datalake. So the usual dbt database+schema configuration stands only for views. Seeds, tables, incrementals will use a parallel datalake+schema configuration. This configuration was also added in the profiles.
 
 ## Seed
 
@@ -78,6 +78,7 @@ adapter's specific configuration|type|required|default
 -|-|-|-
 datalake|CTAS/DROP TABLE allowed source's name|no|`$scratch`
 root_path|the relative path in the datalake|no|`no_schema`
+file|don't name the table like the model, use that alias instead|no|
 
     CREATE TABLE AS
     SELECT *
@@ -89,6 +90,7 @@ adapter's specific configuration|type|required|default
 -|-|-|-
 database|any space (or home space) root|no|`@user`
 schema|relative path in this space|no|`no_schema`
+alias|don't name the view like the model, use that alias instead|no|
     CREATE OR REPLACE VIEW AS
     {{ sql }}
 
@@ -98,6 +100,7 @@ adapter's specific configuration|type|required|default
 -|-|-|-
 datalake|CTAS/DROP TABLE allowed source's name|no|`$scratch`
 root_path||no|`no_schema`
+file|don't name the table like the model, use that alias instead|no|
 
 
 	 CREATE TABLE tblname [ (field1, field2, ...) ]
@@ -117,6 +120,7 @@ datalake|CTAS/DROP TABLE allowed source's name|no|`$scratch`
 root_path||no|`no_schema`
 incremental_strategy| only `append` for the moment|no|`append`
 on_schema_change| `sync_all_columns`, `append_new_columns`, `fail`, `ignore`|no|`ignore`
+file|don't name the table like the model, use that alias instead|no|
 
 Other strategies will be implemented when dremio can `INSERT OVERWRITE` or `MERGE/UPDATE` in an iceberg table.
 
@@ -255,3 +259,23 @@ root_path|no_schema
           user: dremio
           password: dremiosecretpassword
       target: unmanaged
+# Behind the scenes
+## How dremio does "format on read" ?
+
+Dremio has an interesting feature : it can format a raw dataset "on read" that way : 
+
+    select * 
+    from table(
+	    "datalake"."root_path1"."root_path2"."identifier" 
+	    (type=>'text', fieldDelimiter=>';')
+	   )
+This adapter use that to render a decorated `Relation` of a formatted model or source table : instead of the usual `"datalake"."root_path1"."root_path2"."identifier"`,  the `ref()` and `source()` macros are overridden to read the format from the node's `model.config` or `source.external` block, and decorate the path given by their `builtins` version.
+
+This has a drawback : A formatted source table or a formatted model cannot be a reflection's anchor. You will have to create a proxy view.
+
+## How dbt-dremio handle custom `datalake`/`root_path`
+
+Final`database` and `schema` model configurations are a mix of their target and custom values. The rules are defined in the well known `get_custom_(database|schema)_name` macros. 
+
+`datalake` and `root_path` model configurations were introduced to circumvent the segregation dremio imposes between views and tables, and fit the target/custom handling. These macros were adapted to this end.
+If neeeded, please override the `get_custom_(database|schema)_name_impl` macros instead, to  keep everything wired.

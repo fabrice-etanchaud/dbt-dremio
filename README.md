@@ -26,15 +26,15 @@ os dependency :
 In dbt's world, A dremio relation can be either a `view` or a `table`. A dremio reflection - a dataset materialization with a refresh policy - will be mapped to a dbt `materializedview` relation.
 
 # Databases
-As Dremio is a federation tool, dbt's queries can span locations and so, in dremio's adapter, databases are first class citizens.
+As Dremio is a federation tool, dbt's queries can span locations and so, in dremio's adapter, databases are paramount.
 There are three kinds of dataset locations : external sources, datalakes and spaces. Sources are mostly input locations, datalakes are both input and output locations and spaces can only contains views, with exceptions :
 
-location|can create table| can drop table |can create/drop view
--|-|-|-
-external source|no|no|no
-datalake|if CTAS (`CREATE TABLE AS`) is allowed on this source|if `DROP TABLE` is allowed on this source|no
-space|only in the user's home space, and by manually uploading files in the UI|only in the UI|yes
-distributed shared storage (`$scratch` source)|yes|yes|no
+location|can create table| can drop table |can create/drop view|dbt relation types|dbt materializations/nodes
+-|-|-|-|-|-
+external source|no|no|no|table|sources
+datalake|if CTAS (`CREATE TABLE AS`) is allowed on this source|if `DROP TABLE` is allowed on this source|no|table|sources, seed, table, incremental
+space|only in the user's home space, and by manually uploading files in the UI|only in the UI|yes|view, table|view, unmanaged sources
+distributed shared storage (`$scratch` source)|yes|yes|no|table, materializedview|seed, table, incremental, reflection
 
 As you can see, using the SQL-DDL interface, the location type implies the relation type, so materialization implementations do not have to take care of possible relation type mutations.
 

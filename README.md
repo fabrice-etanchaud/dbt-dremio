@@ -70,7 +70,7 @@ That way you can configure seperately input sources and output target `database`
 
 ## Dremio's SQL specificities
 
-Tables and views cannot coexist in a same database/datalake. So the usual dbt database+schema configuration stands only for views. Seeds, tables, incrementals will use a parallel datalake+schema configuration. This configuration was also added in the profiles.
+Tables and views cannot coexist in a same database/datalake. So the usual dbt database+schema configuration stands only for views. Seeds, tables, incrementals will use a parallel datalake+root_path configuration. This configuration was also added in the profiles.
 
 ## Seed
 

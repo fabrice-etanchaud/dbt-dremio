@@ -1,8 +1,10 @@
 {% macro get_insert_into_sql(source_relation, target_relation) %}
 
     {%- set dest_columns = adapter.get_columns_in_relation(target_relation) -%}
-    {%- set dest_cols_csv = dest_columns | map(attribute='quoted') | join(', ') -%}
-    insert into {{ target_relation }}
+    {%- set src_columns = adapter.get_columns_in_relation(source_relation) -%}
+    {%- set intersection = intersect_columns(src_columns, dest_columns) -%}
+    {%- set dest_cols_csv = intersection | map(attribute='quoted') | join(', ') -%}
+    insert into {{ target_relation }}( {{dest_cols_csv}} )
     select {{dest_cols_csv}} from {{ source_relation }}
 
 {% endmacro %}

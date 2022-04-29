@@ -60,3 +60,47 @@
   {% endif %}
 
 {% endmacro %}
+
+{% macro intersect_columns(source_columns, target_columns) %}
+
+  {% set result = [] %}
+  {% set target_names = target_columns | map(attribute = 'column') | list %}
+
+   {# --check whether the name attribute exists in the target - this does not perform a data type check #}
+   {% for sc in source_columns %}
+     {% if sc.name in target_names %}
+        {{ result.append(sc) }}
+     {% endif %}
+   {% endfor %}
+
+  {{ return(result) }}
+
+{% endmacro %}
+
+{% macro get_quoted_csv(column_names) %}
+
+    {% set quoted = [] %}
+    {% for col in column_names -%}
+        {%- do quoted.append(adapter.quote(col)) -%}
+    {%- endfor %}
+
+    {%- set dest_cols_csv = quoted | join(', ') -%}
+    {{ return(dest_cols_csv) }}
+
+{% endmacro %}
+
+{% macro diff_columns(source_columns, target_columns) %}
+
+  {% set result = [] %}
+  {% set target_names = target_columns | map(attribute = 'column') | list %}
+
+   {# --check whether the name attribute exists in the target - this does not perform a data type check #}
+   {% for sc in source_columns %}
+     {% if sc.name not in target_names %}
+        {{ result.append(sc) }}
+     {% endif %}
+   {% endfor %}
+
+  {{ return(result) }}
+
+{% endmacro %}

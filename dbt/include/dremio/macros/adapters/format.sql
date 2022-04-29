@@ -45,23 +45,23 @@ for 'excel' :
     {%- do options.append("type=>'" ~ format ~ "'") -%}
     {%- if format == 'text' -%}
       {%- for key in ['field_delimiter', 'line_delimiter', 'quote', 'comment', 'escape'] -%}
-        {%- set key = key_map[key] or key -%}
         {%- set value = config.get(key, validator=validation.any[basestring]) -%}
+        {%- set key = key_map[key] or key -%}
         {%- if value is not none -%}
           {%- do options.append(key ~ "=>'" ~ value ~ "'") -%}
         {%- endif -%}
       {%- endfor -%}
       {%- for key in ['skip_first_line', 'extract_header', 'trim_header', 'auto_generated_column_names'] -%}
-        {%- set key = key_map[key] or key -%}
         {%- set value = config.get(key, validator=validation.any[boolean]) -%}
+        {%- set key = key_map[key] or key -%}
         {%- if value is not none -%}
           {%- do options.append(key ~ "=>" ~ value) -%}
         {%- endif -%}
       {%- endfor -%}
     {%- elif format == 'json' -%}
       {%- set key = 'pretty_print' -%}
-      {%- set key = key_map[key] or key -%}
       {%- set value = config.get(key, validator=validation.any[boolean]) -%}
+      {%- set key = key_map[key] or key -%}
       {%- if value is not none -%}
         {%- do options.append(key ~ "=>" ~ value) -%}
       {%- endif -%}

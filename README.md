@@ -269,7 +269,7 @@ Dremio has an interesting feature : it can format a raw dataset "on read" that w
 	    "datalake"."root_path1"."root_path2"."identifier" 
 	    (type=>'text', fieldDelimiter=>';')
 	   )
-This adapter use that to render a decorated `Relation` of a formatted model or source table : instead of the usual `"datalake"."root_path1"."root_path2"."identifier"`,  the `ref()` and `source()` macros are overridden to read the format from the node's `model.config` or `source.external` block, and decorate the path given by their `builtins` version.
+This adapter uses that feature to render a decorated `Relation` of a formatted model or source table : instead of the usual `"datalake"."root_path1"."root_path2"."identifier"`,  the `ref()` and `source()` macros are overridden to read the format from the node's `model.config` or `source.external` block, and decorate the path given by their `builtins` version.
 
 This has a drawback : A formatted source table or a formatted model cannot be a reflection's anchor. You will have to create a proxy view.
 

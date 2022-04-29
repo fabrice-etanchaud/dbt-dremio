@@ -216,7 +216,7 @@ As tables and views cannot coexist neither in spaces or datalakes, when a model 
 dbt can apply a 'twin' strategy :
  - **allow** sql object homonyms of different types (relaxed behavior) : if a model changes materialization from table to view, the previous table still remains in the datalake layer.
  - **prevent** sql object homonym creation, dropping the previous model materialization if it exists : the previous table is dropped in the datalake layer.
- - **clone** the tabled based materialization as a view, in order to have a direct access to the model from the space layer. If a model changes materialization from view to table, that time the view is neither left untouched nor dropped, but replaced with a straight `select * from {{ the_new_table }}`.
+ - **clone** the tabled based materialization as a view, in order to have a direct access to the model from the space layer. If a model changes materialization from view to table, that time the view is neither left untouched nor dropped, but its definition is replaced with a straight `select * from {{ the_new_table }}`.
 
 `config`|materialization|type|required|default
 -|-|-|-|-

@@ -57,6 +57,8 @@ Because dremio accepts almost any string character in the objects' names, the ad
 
 # Sources
 
+In dbt, a source is a set of read-only datasets, foundation of the downstream transformation steps toward the datasets that will be exposed to the end users.
+
 ## Environments
 
 A same dremio installation could handle several data environments. In order to group sources by environment, you can use the undocumented `target.profile_name` or the adapter specific `environment` configuration to map environments between dremio and dbt :
@@ -64,9 +66,11 @@ A same dremio installation could handle several data environments. In order to g
  - dremio's side: prefix all the sources' names of a specific environment `prd` with the environment's name, for example : `prd_crm, prd_hr, prd_accounting`
  - dbt's side: prefix all source's database configs like this : `{{target.environment}}_crm` or `{{target.profile_name}}_crm`
 
-That way you can configure seperately input sources and output target `database`.
+That way you can configure seperately input sources and output `databases/datalakes`.
 
 # Materializations
+
+In dbt, a transformation step is called a **model**; defined by a `SELECT` statement, its `FROM` clause may reference source tables and/or other upstream models. A model is also the dataset resulting from this transformation, in fact the kind of SQL object it will be materialized in. Will it be a Common table expression in downstream models ? A view ? A table ? Don't worry, just set a configuration parameter, dbt will do that for you !
 
 ## Dremio's SQL specificities
 

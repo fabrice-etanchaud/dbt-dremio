@@ -122,7 +122,7 @@ file|don't name the table like the model, use that alias instead|no|
 ## Incremental
 
 This is a very interesting materialization. An incremental transformation is not only referencing other models and/or sources, but also itself.
-As the `SELECT` statement is embedded in a jinja2 template, it can be written in order to produce two distinct datasets; one for (re)initialization; one for incremental update, based on the current content of the already created dataset. The SQL will access to the current dataset with the special `this` relation.
+As the `SELECT` statement is embedded in a jinja2 template, it can be written in order to produce two distinct datasets; one for (re)initialization; one for incremental update, based on the current content of the already created dataset. The SQL will reference the current dataset state with the special `{{ this }}` relation.
 
 ### the `append`strategy is available in dbt when `dremio.iceberg.ctas.enabled=yes` in dremio.
 

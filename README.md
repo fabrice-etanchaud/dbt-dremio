@@ -70,13 +70,15 @@ That way you can configure seperately input sources and output `databases/datala
 
 # Materializations
 
-In dbt, a transformation step is called a **model**; defined by a `SELECT` statement, its `FROM` clause may reference source tables and/or other upstream models. A model is also the dataset resulting from this transformation, in fact the kind of SQL object it will be materialized in. Will it be a Common table expression in downstream models ? A view ? A table ? Don't worry, just set a configuration parameter, dbt will do that for you !
+In dbt, a transformation step is called a **model**; defined by a `SELECT` statement embedded in a jinja2 template. Its `FROM` clause may reference source tables and/or other upstream models. A model is also the dataset resulting from this transformation, in fact the kind of SQL object it will be materialized in. Will it be a Common Table Expression used in downstream models ? A view ? A table ? Don't worry, just change the `materialized` parameter's value, and dbt will do that for you !
 
 ## Dremio's SQL specificities
 
 Tables and views cannot coexist in a same database/datalake. So the usual dbt database+schema configuration stands only for views. Seeds, tables, incrementals will use a parallel datalake+root_path configuration. This configuration was also added in the profiles.
 
 ## Seed
+
+A seed can be viewed as a kind of static model; defined by a csv file, this is also a kind of version controled source table.
 
 adapter's specific configuration|type|required|default
 -|-|-|-
@@ -89,7 +91,9 @@ file|don't name the table like the model, use that alias instead|no|
     FROM VALUES()[,()]
 
 As dremio odbc bridge does not support query bindings (but Arrow flight SQL does...), the python value is converted as string, quoted and casted in the column sql type.
+
 ## View
+
 adapter's specific configuration|type|required|default
 -|-|-|-
 database|any space (or home space) root|no|`@user`
@@ -116,6 +120,10 @@ file|don't name the table like the model, use that alias instead|no|
      [ AS select_statement ]
      
 ## Incremental
+
+This is a very interesting materialization. An incremental transformation is not only referencing other models and/or sources, but also itself.
+As the `SELECT` statement is embedded in a jinja2 template, it can be written in order to produce two distinct datasets; one for (re)initialization; one for incremental update, based on the current content of the already created dataset. The SQL will access to the current dataset with the special `this` relation.
+
 ### the `append`strategy is available in dbt when `dremio.iceberg.ctas.enabled=yes` in dremio.
 
 adapter's specific configuration|type|required|default
@@ -129,7 +137,11 @@ file|don't name the table like the model, use that alias instead|no|
 Other strategies will be implemented when dremio can `INSERT OVERWRITE` or `MERGE/UPDATE` in an iceberg table.
 
 ## Reflection
-A reflection is a dataset materialization, with a refresh policy, handled internally by dremio.
+
+A reflection is a materialization of a dataset (its anchor), with a refresh policy, handled internally by dremio, of three different kinds : 
+- a **raw** reflection will act as a materialized view of all or a subset of an upstream model's columns (usually a view)
+- a **aggregate** reflection is much like a mondrian aggregation table, pre-aggregated measures on a subset of dimension columns
+- a **external** reflection just tell dremio to use a dataset (external target) as a possible materialization of another dataset.
 
 The `dremio:reflections_enabled` boolean dbt variable can be used to disable reflection management in dbt. 
 That way, you can still use dbt ontop dremio enterprise edition, even without admin rights needed to read `sys.reflections` table.
@@ -168,12 +180,13 @@ arrow_cache|all but external|is the reflection using arrow caching ?|no|`false`
 	ADD EXTERNAL REFLECTION name
 	USING target
 
-The reflection's anchor is defined in the .sql model file like this : 
+The model definition will not contain a `SELECT` statement, but a simple : 
 
 	 -- depends_on: {{ ref('my_anchor') }}
 
 ## Format configuration
-Model format is specified in its `config` block; source table format in its `external` properties block.
+
+For persisted models, a format can be specified in its `config` block; for a source table, in its `external` properties block.
 
 Seed, table and incremental materializations share the same format configuration :
 
@@ -209,7 +222,7 @@ Any materialization except `view` can be partitioned. Dremio will add as many `d
 partition_method|all but reflection|`striped`, `hash`, `roundrobin`|no|
 partition_method|reflection|`striped`, `consolidated`|no|
 partition_by|all |partition columns|no|
-localsort_by|all |sort columns inside partition|no|
+localsort_by|all |sort columns within partition|no|
 distribute_by|all |distribution columns|no|
 single_writer|all but reflection|disable parallel write, incompatible with partition_by|no|
 
@@ -217,7 +230,7 @@ single_writer|all but reflection|disable parallel write, incompatible with parti
 
 As tables and views cannot coexist neither in spaces or datalakes, when a model changes materialization, from view to table for example, we can end up with both a view in a space, and a table in a datalake. 
 
-dbt can apply a 'twin' strategy :
+At model level, dbt can apply a 'twin' strategy :
  - **allow** sql object homonyms of different types (relaxed behavior) : if a model changes materialization from table to view, the previous table still remains in the datalake layer.
  - **prevent** sql object homonym creation, dropping the previous model materialization if it exists : the previous table is dropped in the datalake layer.
  - **clone** the tabled based materialization as a view, in order to have a direct access to the model from the space layer. If a model changes materialization from view to table, that time the view is neither left untouched nor dropped, but its definition is replaced with a straight `select * from {{ the_new_table }}`.
@@ -226,7 +239,10 @@ dbt can apply a 'twin' strategy :
 -|-|-|-|-
 twin_strategy|every materialization but reflection|`allow`, `prevent`, `clone`|no|`clone`
 
+It should be safe as long as you don't play with `alias` and/or `file` configs.
+
 # Connection
+
 Be careful to provide the right odbc driver's name in the adapter specific `driver` attribute, the one you gave to your dremio's odbc driver installation.
 
 Here are the profile default values :
@@ -238,6 +254,7 @@ schema|no_schema
 datalake|$scratch
 root_path|no_schema
 
+With this default configuration, one can start trying dbt on dremio out of the box, as any dremio may have a user home space and a $scratch file system.
 
     track17:
       outputs:
@@ -263,6 +280,8 @@ root_path|no_schema
           user: dremio
           password: dremiosecretpassword
       target: unmanaged
+
+
 # Behind the scenes
 ## How dremio does "format on read" ?
 

@@ -84,7 +84,7 @@ file|don't name the table like the model, use that alias instead|no|
     SELECT *
     FROM VALUES()[,()]
 
-As dremio does not support query bindings, the python value is converted as string, quoted and casted in the column sql type.
+As dremio odbc bridge does not support query bindings (but Arrow flight SQL does...), the python value is converted as string, quoted and casted in the column sql type.
 ## View
 adapter's specific configuration|type|required|default
 -|-|-|-

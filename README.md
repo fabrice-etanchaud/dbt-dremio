@@ -228,12 +228,12 @@ single_writer|all but reflection|disable parallel write, incompatible with parti
 
 ## Twin strategy configuration
 
-As tables and views cannot coexist neither in spaces or datalakes, when a model changes materialization, from view to table for example, we can end up with both a view in a space, and a table in a datalake. 
+As tables and views cannot coexist neither in spaces or datalakes, when a model changes relation type, from view to incremental materialization for example, we can end up with both a view in a space, and a table in a datalake. 
 
 At model level, dbt can apply a 'twin' strategy :
- - **allow** sql object homonyms of different types (relaxed behavior) : if a model changes materialization from table to view, the previous table still remains in the datalake layer.
- - **prevent** sql object homonym creation, dropping the previous model materialization if it exists : the previous table is dropped in the datalake layer.
- - **clone** the tabled based materialization as a view, in order to have a direct access to the model from the space layer. If a model changes materialization from view to table, that time the view is neither left untouched nor dropped, but its definition is replaced with a straight `select * from {{ the_new_table }}`.
+ - **allow** sql object homonyms of different types (relaxed behavior) : if a model changes relation type, the previous table or view remains.
+ - **prevent** sql object homonym creation, dropping the previous relation of different type if it exists : the previous table or view is dropped.
+ - **clone** a table relation as a view, in order to have a direct access to the model's dataset from the space layer. That time the view is neither left untouched nor dropped, but its definition is replaced with a straight `select * from {{ the_new_table_relation }}`.
 
 `config`|materialization|type|required|default
 -|-|-|-|-

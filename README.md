@@ -26,8 +26,8 @@ os dependency :
 In dbt's world, A dremio relation can be either a `view` or a `table`. A dremio reflection - a dataset materialization with a refresh policy - will be mapped to a dbt `materializedview` relation.
 
 # Databases
-As Dremio is a federation tool, dbt's queries can span locations and so, in dremio's adapter, databases are first class citizens.
-There are three kinds of dataset locations : external sources, datalakes and spaces. Sources are mostly input locations, datalakes are both input and output locations and spaces can only contains views, with exceptions :
+As Dremio is a federation tool, dbt's queries can span locations and so, in dremio's adapter, "databases" are paramount.
+There are three kinds of dataset locations : external sources, datalakes and spaces. Sources are input locations, datalakes are both input and output locations and spaces can only contains views, with exceptions :
 
 location|can create table| can drop table |can create/drop view
 -|-|-|-

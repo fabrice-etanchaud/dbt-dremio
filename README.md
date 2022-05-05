@@ -242,6 +242,23 @@ twin_strategy|every materialization but reflection|`allow`, `prevent`, `clone`|n
 
 It should be safe as long as you don't play with `alias` and/or `file` configs.
 
+## External queries
+
+dremio can send native SQL to external sources, this is known as ["External Queries"](https://docs.dremio.com/software/data-sources/external-queries/).
+
+The SQL must not contain any `ref()` or `source()`, only `[schema.]table` paths. 
+
+At least one `-- depends_on : {{ source(my_source, my_table) }}` must be added to the model's SQL instead. To let source table dependencies show up in the auto generated documentation, you should indeed mention all the source tables used in the external query.
+
+`config`|materialization|type|required|default
+-|-|-|-|-
+external_query|view, table or incremental|`true` or `false`|no|`false`
+
+dbt will render the first source table like this : `{{ source(my_source, my_table).include(schema=false, identifier=false }}` to obtain the final source database and build the external query call :
+
+	select *
+	from table("source_name".external_query('sql'))
+
 # Connection
 
 Be careful to provide the right odbc driver's name in the adapter specific `driver` attribute, the one you gave to your dremio's odbc driver installation.

@@ -12,8 +12,8 @@
         ,numeric_precision
         ,numeric_scale
     from information_schema.columns
-    where table_schema = '{{ schema_name }}'
-    and table_name = '{{ identifier }}'
+    where ilike(table_schema, '{{ schema_name }}')
+    and ilike(table_name, '{{ identifier }}')
     order by ordinal_position
   {% endcall %}
   {% set table = load_result('get_columns_in_relation').table %}

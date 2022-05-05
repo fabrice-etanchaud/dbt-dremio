@@ -46,7 +46,7 @@
             and (strpos(regexp_replace(display_columns, '$|, |^', '/'), '/' || column_name || '/') > 0
                   or strpos(regexp_replace(dimensions, '$|, |^', '/'), '/' || column_name || '/') > 0
                   or strpos(regexp_replace(measures, '$|, |^', '/'), '/' || column_name || '/') > 0 ))
-      where columns.table_schema in ( {{ table_schemas | join(', ') }} )
+      where lower(columns.table_schema) in ( {{ table_schemas | map('lower') | join(', ') }} )
 
       union all
 
@@ -73,7 +73,7 @@
         on (t.table_schema = columns.table_schema
         and t.table_name = columns.table_name)
       where t.table_type <> 'SYSTEM_TABLE'
-      and t.table_schema in ( {{ table_schemas | join(', ') }} )
+      and lower(t.table_schema) in ( {{ table_schemas | map('lower') | join(', ') }} )
     )
 
     select *
@@ -85,7 +85,6 @@
   {{ return(load_result('catalog').table) }}
 {%- endmacro %}
 
-
 {% macro dremio__information_schema_name(database) -%}
     information_schema
 {%- endmacro %}
@@ -95,7 +94,7 @@
   {% set sql %}
     select substring(schema_name, position('.' in schema_name) + 1)
     from information_schema.schemata
-    where schema_name like '{{ schema_name_like }}'
+    where ilike(schema_name, '{{ schema_name_like }}')
     union
     values('no_schema')
   {% endset %}
@@ -108,7 +107,7 @@
   {% set sql -%}
     select count(*)
     from information_schema.schemata
-    where schema_name = '{{ schema_name }}'
+    where ilike(schema_name, '{{ schema_name }}')
   {%- endset %}
   {{ return(run_query(sql)) }}
 {% endmacro %}
@@ -151,8 +150,8 @@
       )
       select table_catalog, table_name, table_schema, table_type
       from cte2
-      where table_catalog = '{{ database }}'
-      and table_schema = '{{ schema }}'
+      where ilike(table_catalog, '{{ database }}')
+      and ilike(table_schema, '{{ schema }}')
 
       union all
 
@@ -169,7 +168,7 @@
           end) as table_schema
           ,lower(table_type) as table_type
       from information_schema."tables"
-      where table_schema = '{{ schema_name }}'
+      where ilike(table_schema, '{{ schema_name }}')
       and table_type <> 'system_table'
 
   {% endcall %}

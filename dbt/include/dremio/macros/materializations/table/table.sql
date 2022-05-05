@@ -18,7 +18,7 @@
 
   -- build model
   {% call statement('main') -%}
-    {{ create_table_as(False, target_relation, sql) }}
+    {{ create_table_as(False, target_relation, external_query(sql)) }}
   {%- endcall %}
 
   {{ refresh_metadata(target_relation, format) }}

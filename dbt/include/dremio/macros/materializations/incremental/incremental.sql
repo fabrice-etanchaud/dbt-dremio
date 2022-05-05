@@ -27,15 +27,15 @@
   {{ run_hooks(pre_hooks) }}
 
   {% if old_relation is none %}
-    {% set build_sql = create_table_as(False, target_relation, sql) %}
+    {% set build_sql = create_table_as(False, target_relation, external_query(sql)) %}
   {% elif full_refresh_mode %}
     {% do adapter.drop_relation(old_relation) %}
-    {% set build_sql = create_table_as(False, target_relation, sql) %}
+    {% set build_sql = create_table_as(False, target_relation, external_query(sql)) %}
   {% else %}
     {% if tmp_relation is not none %}
       {{ adapter.drop_relation(tmp_relation) }}
     {% endif %}
-    {{ run_query(create_table_as(True, target_tmp_relation, sql)) }}
+    {{ run_query(create_table_as(True, target_tmp_relation, external_query(sql))) }}
     {{ process_schema_changes(on_schema_change, target_tmp_relation, old_relation) }}
     {% set build_sql = dbt_dremio_get_incremental_sql(strategy, target_tmp_relation, target_relation, unique_key) %}
   {% endif %}

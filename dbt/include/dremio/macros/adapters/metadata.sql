@@ -46,7 +46,10 @@
             and (strpos(regexp_replace(display_columns, '$|, |^', '/'), '/' || column_name || '/') > 0
                   or strpos(regexp_replace(dimensions, '$|, |^', '/'), '/' || column_name || '/') > 0
                   or strpos(regexp_replace(measures, '$|, |^', '/'), '/' || column_name || '/') > 0 ))
-      where lower(columns.table_schema) in ( {{ table_schemas | map('lower') | join(', ') }} )
+      where 
+        {% for table_schema in table_schemas -%}
+          ilike( table_schema, {{ table_schema.strip('"') }}){%- if not loop.last %} or {% endif -%}
+        {%- endfor %}
 
       union all
 
@@ -73,7 +76,11 @@
         on (t.table_schema = columns.table_schema
         and t.table_name = columns.table_name)
       where t.table_type <> 'SYSTEM_TABLE'
-      and lower(t.table_schema) in ( {{ table_schemas | map('lower') | join(', ') }} )
+      and (
+        {%- for table_schema in table_schemas -%}
+          ilike( t.table_schema, {{ table_schema.strip('"') }}){%- if not loop.last %} or {% endif -%}
+        {%- endfor -%}
+      )
     )
 
     select *

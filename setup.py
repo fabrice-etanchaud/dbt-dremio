@@ -3,7 +3,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 package_name = "dbt-dremio"
-package_version = "1.0.6.4"
+package_version = "1.0.6.5"
 description = """The dremio adapter plugin for dbt (data build tool)"""
 
 setup(

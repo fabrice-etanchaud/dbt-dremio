@@ -274,6 +274,8 @@ schema|no_schema
 datalake|$scratch
 root_path|no_schema
 
+## Dremio Software
+
 With this default configuration, one can start trying dbt on dremio out of the box, as any dremio may have a user home space and a $scratch file system.
 
     track17:
@@ -301,6 +303,30 @@ With this default configuration, one can start trying dbt on dremio out of the b
           password: dremiosecretpassword
       target: unmanaged
 
+## Dremio Cloud
+
+For Dremio Cloud, you will have to make an additional configuration change to the `dbt_project.yml`.
+Add the following to `dbt_project.yml`:
+
+    vars:
+      dremio:reflections_enabled: false
+
+The profile will look similar to below:
+
+    [project_name]:
+      outputs:
+        test:
+          type: dremio
+          threads: 2
+          driver: Dremio ODBC Driver 64-bit
+          host: sql.dremio.cloud
+          port: 443
+          database: '@[YOUR_EMAIL]'
+          schema: no_schema
+          user: $token
+          password: [PAT]
+          additional_parameters: SSL=1;
+      target: test
 
 # Behind the scenes
 ## How dremio does "format on read" ?

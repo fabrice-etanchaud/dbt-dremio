@@ -1,5 +1,3 @@
-# Caution : Dremio's policy regarding community access to dremio with ODBC is not clear since late May 2022. I suggest not to push in production any dbt-dremio related project for now, until we get feedback from dremio. I will make my best to quickly provide the community with an API (or Flight) based adapter, but I cannot give any schedule.
-
 ![dbt-dremio](https://resumo.cloud/wp-content/uploads/2021/07/modelo-imagem-rc-16-1.png)
 
 > *This project is developed during my spare time, along side my lead dev position at [MAIF-VIE](http://www.maif.fr), and aims to provide a competitive alternative solution for our current ETL stack.*

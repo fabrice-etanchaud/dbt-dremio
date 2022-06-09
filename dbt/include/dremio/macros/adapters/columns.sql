@@ -77,11 +77,11 @@
 
 {% endmacro %}
 
-{% macro get_quoted_csv(column_names) %}
+{% macro get_quoted_csv(column_names, table_alias=none) %}
 
     {% set quoted = [] %}
     {% for col in column_names -%}
-        {%- do quoted.append(adapter.quote(col)) -%}
+        {%- do quoted.append((adapter.quote(table_alias) ~ '.' if table_alias is not none else '') ~ adapter.quote(col)) -%}
     {%- endfor %}
 
     {%- set dest_cols_csv = quoted | join(', ') -%}

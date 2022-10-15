@@ -1,6 +1,6 @@
 ![dbt-dremio](https://resumo.cloud/wp-content/uploads/2021/07/modelo-imagem-rc-16-1.png)
 
-> *Hi all dbt-dremio users ! dremio is now the official maintainer of the project ! I initiated dbt-dremio two years ago. Meanwhile, dbt and dremio have become such great products that dbt-dremio really deserves much more attention than I can offer it on my spare time. Thank you for your feedback during these two years. Long live open-source, long live dbt and dremio ! Here is the new repo : [dbt-dremio](https://github.com/dremio/dbt-dremio)*
+# Hi all dbt-dremio users ! dremio is now the official maintainer of the project ! I initiated it two years ago. Meanwhile, dbt and dremio have become such great products that dbt-dremio really deserves much more attention than I can offer it on my spare time. Thank you for your feedback during these two years. Long live open-source, long live dbt and dremio ! Here is the new repo : [dbt-dremio](https://github.com/dremio/dbt-dremio)
 
 > *This project is developed during my spare time, along side my lead dev position at [MAIF-VIE](http://www.maif.fr), and aims to provide a competitive alternative solution for our current ETL stack.*
 
